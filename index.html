@@ -1,0 +1,591 @@
+<!DOCTYPE html>
+<html lang="ms" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WBL Hub — Dashboard Penempatan Pelajar</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f0f4f8;
+      --surface:   #ffffff;
+      --surface2:  #f8fafc;
+      --border:    #e2e8f0;
+      --text:      #1a202c;
+      --muted:     #64748b;
+      --accent:    #2563eb;
+      --blue-lt:   #eff6ff;
+      --green:     #16a34a;
+      --green-lt:  #f0fdf4;
+      --purple:    #7c3aed;
+      --purple-lt: #faf5ff;
+      --red:       #dc2626;
+      --red-lt:    #fef2f2;
+      --amber:     #d97706;
+      --amber-lt:  #fffbeb;
+      --cyan:      #0891b2;
+      --cyan-lt:   #ecfeff;
+      --nav:       #0f172a;
+      --nav-acc:   #38bdf8;
+      --radius:    14px;
+      --shadow:    0 1px 4px rgba(0,0,0,.06), 0 4px 18px rgba(0,0,0,.06);
+    }
+    [data-theme="dark"] {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #273348;
+      --border:    #334155;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --blue-lt:   #1e3a5f;
+      --green-lt:  #14532d;
+      --purple-lt: #3b1f6e;
+      --red-lt:    #7f1d1d;
+      --amber-lt:  #78350f;
+      --cyan-lt:   #0e3a4a;
+      --shadow:    0 1px 4px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.3);
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+      transition: background .25s, color .25s;
+    }
+
+    /* ── NAV ── */
+    header {
+      background: var(--nav);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 32px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .brand { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.3px; white-space: nowrap; }
+    .brand span { color: var(--nav-acc); }
+    header nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+    header nav a {
+      color: #94a3b8; text-decoration: none; font-size: 13px; font-weight: 500;
+      padding: 6px 12px; border-radius: 6px; transition: background .15s, color .15s;
+    }
+    header nav a:hover { background: rgba(255,255,255,.08); color: #e2e8f0; }
+    header nav a.active { background: rgba(56,189,248,.15); color: var(--nav-acc); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #fff;
+    }
+    .dm-toggle {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+      border-radius: 20px; padding: 5px 12px; cursor: pointer;
+      font-size: 12px; font-weight: 600; color: #cbd5e1; transition: background .15s;
+    }
+    .dm-toggle:hover { background: rgba(255,255,255,.14); }
+    .nav-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 17px; height: 17px; border-radius: 20px; padding: 0 5px;
+      background: var(--red); color: #fff; font-size: 10px; font-weight: 800; margin-left: 4px;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      background: var(--nav);
+      padding: 56px 32px 48px;
+      text-align: center;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .hero-eyebrow {
+      font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 2px;
+      color: var(--nav-acc); margin-bottom: 14px;
+    }
+    .hero h1 {
+      font-size: 34px; font-weight: 900; color: #fff; letter-spacing: -.6px; line-height: 1.2;
+      margin-bottom: 12px;
+    }
+    .hero h1 span { color: var(--nav-acc); }
+    .hero p { font-size: 15px; color: #94a3b8; max-width: 540px; margin: 0 auto 28px; }
+    .hero-chips { display: flex; gap: 10px; justify-content: center; flex-wrap: wrap; }
+    .hero-chip {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.12);
+      border-radius: 20px; padding: 5px 14px; font-size: 12px; font-weight: 600;
+      color: #cbd5e1;
+    }
+
+    /* ── KPI STRIP ── */
+    .kpi-strip {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+    }
+    .kpi-strip-item {
+      padding: 22px 24px;
+      border-right: 1px solid var(--border);
+      text-align: center;
+    }
+    .kpi-strip-item:last-child { border-right: none; }
+    .ks-val { font-size: 30px; font-weight: 900; letter-spacing: -1px; line-height: 1; }
+    .ks-val.blue   { color: var(--accent); }
+    .ks-val.green  { color: var(--green); }
+    .ks-val.purple { color: var(--purple); }
+    .ks-val.red    { color: var(--red); }
+    .ks-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); margin-top: 4px; }
+    .ks-sub { font-size: 11px; color: var(--muted); margin-top: 2px; }
+
+    /* ── PAGE ── */
+    .page { max-width: 1100px; margin: 0 auto; padding: 40px 24px 72px; }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); margin-bottom: 16px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── SESSION CARDS ── */
+    .session-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 20px;
+      margin-bottom: 40px;
+    }
+    .session-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+      text-decoration: none;
+      color: inherit;
+      display: flex;
+      flex-direction: column;
+      transition: transform .15s, box-shadow .15s;
+    }
+    .session-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(0,0,0,.08), 0 12px 40px rgba(0,0,0,.1);
+    }
+    .session-card-top {
+      padding: 24px 24px 20px;
+      border-bottom: 1px solid var(--border);
+      flex: 1;
+    }
+    .sc-eyebrow {
+      font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px;
+      margin-bottom: 8px;
+    }
+    .sc-title { font-size: 18px; font-weight: 800; margin-bottom: 4px; letter-spacing: -.3px; }
+    .sc-sub { font-size: 12.5px; color: var(--muted); margin-bottom: 16px; }
+    .sc-stats { display: flex; gap: 20px; }
+    .sc-stat-val { font-size: 22px; font-weight: 900; letter-spacing: -.5px; line-height: 1; }
+    .sc-stat-lbl { font-size: 10.5px; color: var(--muted); margin-top: 2px; }
+    .session-card-foot {
+      padding: 12px 24px;
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 12px; color: var(--muted);
+    }
+    .sc-link {
+      font-size: 12px; font-weight: 700;
+      display: flex; align-items: center; gap: 4px;
+    }
+
+    /* Card color variants */
+    .sc-cyan   .sc-eyebrow { color: var(--cyan); }
+    .sc-cyan   .sc-title   { color: var(--text); }
+    .sc-cyan   .session-card-top { border-top: 3px solid var(--cyan); }
+    .sc-cyan   .sc-link    { color: var(--cyan); }
+    .sc-cyan   .sc-stat-val { color: var(--cyan); }
+
+    .sc-blue   .sc-eyebrow { color: var(--accent); }
+    .sc-blue   .session-card-top { border-top: 3px solid var(--accent); }
+    .sc-blue   .sc-link    { color: var(--accent); }
+    .sc-blue   .sc-stat-val { color: var(--accent); }
+
+    .sc-green  .sc-eyebrow { color: var(--green); }
+    .sc-green  .session-card-top { border-top: 3px solid var(--green); }
+    .sc-green  .sc-link    { color: var(--green); }
+    .sc-green  .sc-stat-val { color: var(--green); }
+
+    .sc-red    .sc-eyebrow { color: var(--red); }
+    .sc-red    .session-card-top { border-top: 3px solid var(--red); }
+    .sc-red    .sc-link    { color: var(--red); }
+    .sc-red    .sc-stat-val { color: var(--red); }
+
+    /* ── QUICK ACCESS ── */
+    .quick-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+      margin-bottom: 40px;
+    }
+    .quick-btn {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px;
+      text-decoration: none; color: inherit;
+      display: flex; flex-direction: column; gap: 6px;
+      transition: border-color .15s, background .15s;
+    }
+    .quick-btn:hover { border-color: var(--accent); background: var(--blue-lt); }
+    .quick-icon { font-size: 20px; }
+    .quick-title { font-size: 13px; font-weight: 700; }
+    .quick-sub { font-size: 11px; color: var(--muted); }
+
+    /* ── INFO PANEL ── */
+    .info-row {
+      display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px;
+    }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 16px 20px; border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 14px; font-weight: 700; }
+    .panel-body { padding: 18px 20px; }
+
+    .progress-item { margin-bottom: 14px; }
+    .progress-item:last-child { margin-bottom: 0; }
+    .pi-head { display: flex; justify-content: space-between; font-size: 12.5px; font-weight: 600; margin-bottom: 5px; }
+    .pi-sub { font-size: 11px; color: var(--muted); }
+    .pi-track { height: 7px; background: var(--surface2); border-radius: 4px; overflow: hidden; margin-top: 4px; }
+    .pi-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+    .timeline-item { display: flex; gap: 14px; margin-bottom: 14px; }
+    .timeline-item:last-child { margin-bottom: 0; }
+    .tl-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; margin-top: 4px; }
+    .tl-body { flex: 1; }
+    .tl-title { font-size: 13px; font-weight: 600; }
+    .tl-sub { font-size: 11.5px; color: var(--muted); margin-top: 1px; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 20px; font-size: 11px;
+      color: #94a3b8; border-top: 1px solid var(--border); margin-top: 8px;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      header { display: none !important; }
+      .hero { padding: 24px 16px; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 860px) {
+      .kpi-strip { grid-template-columns: repeat(2, 1fr); }
+      .kpi-strip-item:nth-child(2) { border-right: none; }
+      .session-grid { grid-template-columns: 1fr; }
+      .quick-grid { grid-template-columns: repeat(2, 1fr); }
+      .info-row { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 560px) {
+      .hero h1 { font-size: 24px; }
+      .hero { padding: 36px 20px 32px; }
+      .kpi-strip { grid-template-columns: 1fr 1fr; }
+      .quick-grid { grid-template-columns: 1fr 1fr; }
+      header nav a { display: none; }
+      header nav a.active { display: inline-flex; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<header>
+  <div class="brand">WBL <span>Hub</span></div>
+  <nav>
+    <a href="index.html" class="active">Home</a>
+    <a href="wbl-sesi2-2526.html">Sesi 2 2025/26</a>
+    <a href="wbl-sesi1.html">Sesi 1 2026/27</a>
+    <a href="wbl.html">Sesi 2 2026/27</a>
+    <a href="wbl-isu.html">Isu Pelajar <span class="nav-badge">34</span></a>
+  </nav>
+  <div class="header-right">
+    <button class="dm-toggle" id="dmToggle">🌙 Dark</button>
+    <div class="avatar">WBL</div>
+  </div>
+</header>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-eyebrow">Politeknik · WBL Management System</div>
+  <h1>Dashboard <span>WBL</span> Pelajar</h1>
+  <p>Pusat pemantauan penempatan Work-Based Learning bagi semua sesi pengajian. Pantau statistik, isu pelajar, dan perbandingan sesi dalam satu platform.</p>
+  <div class="hero-chips">
+    <div class="hero-chip">📊 3 Sesi Aktif</div>
+    <div class="hero-chip">🎓 392 Pelajar</div>
+    <div class="hero-chip">🏢 Penempatan DCS &amp; DCV</div>
+    <div class="hero-chip">⚠️ 34 Isu Pelajar</div>
+  </div>
+</div>
+
+<!-- KPI STRIP -->
+<div class="kpi-strip">
+  <div class="kpi-strip-item">
+    <div class="ks-val blue">392</div>
+    <div class="ks-label">Jumlah Pelajar</div>
+    <div class="ks-sub">Merentas 3 sesi</div>
+  </div>
+  <div class="kpi-strip-item">
+    <div class="ks-val green">88.5%</div>
+    <div class="ks-label">Purata Penempatan</div>
+    <div class="ks-sub">Sesi 2 2026/27 terkini</div>
+  </div>
+  <div class="kpi-strip-item">
+    <div class="ks-val purple">14</div>
+    <div class="ks-label">Negeri Diliputi</div>
+    <div class="ks-sub">Seluruh Malaysia</div>
+  </div>
+  <div class="kpi-strip-item">
+    <div class="ks-val red">34</div>
+    <div class="ks-label">Isu Pelajar Aktif</div>
+    <div class="ks-sub">Berpindah &amp; tangguh</div>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- Session Cards -->
+  <div class="section-label">Dashboard Mengikut Sesi</div>
+  <div class="session-grid">
+
+    <!-- Sesi 2 2025/26 -->
+    <a href="wbl-sesi2-2526.html" class="session-card sc-cyan">
+      <div class="session-card-top">
+        <div class="sc-eyebrow">Sesi Terdahulu</div>
+        <div class="sc-title">Sesi 2 · 2025/2026</div>
+        <div class="sc-sub">Data pendaftaran pelajar WBL · Program DCS &amp; DCV</div>
+        <div class="sc-stats">
+          <div>
+            <div class="sc-stat-val">150</div>
+            <div class="sc-stat-lbl">Pelajar Berdaftar</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">7</div>
+            <div class="sc-stat-lbl">Kelas Aktif</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">14</div>
+            <div class="sc-stat-lbl">Negeri</div>
+          </div>
+        </div>
+      </div>
+      <div class="session-card-foot">
+        <span>DCS: 70 · DCV: 80</span>
+        <span class="sc-link">Lihat Dashboard →</span>
+      </div>
+    </a>
+
+    <!-- Sesi 1 2026/27 -->
+    <a href="wbl-sesi1.html" class="session-card sc-blue">
+      <div class="session-card-top">
+        <div class="sc-eyebrow">Sesi Lepas</div>
+        <div class="sc-title">Sesi 1 · 2026/2027</div>
+        <div class="sc-sub">Statistik penempatan syarikat &amp; agihan negeri</div>
+        <div class="sc-stats">
+          <div>
+            <div class="sc-stat-val">118</div>
+            <div class="sc-stat-lbl">Pelajar Berdaftar</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">90.7%</div>
+            <div class="sc-stat-lbl">Telah Ditempatkan</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">107</div>
+            <div class="sc-stat-lbl">Di Syarikat</div>
+          </div>
+        </div>
+      </div>
+      <div class="session-card-foot">
+        <span>DCS + DCV · Sesi 1</span>
+        <span class="sc-link">Lihat Dashboard →</span>
+      </div>
+    </a>
+
+    <!-- Sesi 2 2026/27 -->
+    <a href="wbl.html" class="session-card sc-green">
+      <div class="session-card-top">
+        <div class="sc-eyebrow">Sesi Semasa</div>
+        <div class="sc-title">Sesi 2 · 2026/2027</div>
+        <div class="sc-sub">Dashboard penempatan lengkap dengan peta &amp; carta interaktif</div>
+        <div class="sc-stats">
+          <div>
+            <div class="sc-stat-val">124</div>
+            <div class="sc-stat-lbl">Pelajar Berdaftar</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">88.7%</div>
+            <div class="sc-stat-lbl">Telah Ditempatkan</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">110</div>
+            <div class="sc-stat-lbl">Di Syarikat</div>
+          </div>
+        </div>
+      </div>
+      <div class="session-card-foot">
+        <span>Peta · Carta · Export CSV</span>
+        <span class="sc-link">Lihat Dashboard →</span>
+      </div>
+    </a>
+
+    <!-- Isu Pelajar -->
+    <a href="wbl-isu.html" class="session-card sc-red">
+      <div class="session-card-top">
+        <div class="sc-eyebrow">Pengurusan Isu</div>
+        <div class="sc-title">Isu Pelajar WBL</div>
+        <div class="sc-sub">Rekod berpindah syarikat, tangguh &amp; SPMP untuk semua sesi</div>
+        <div class="sc-stats">
+          <div>
+            <div class="sc-stat-val">34</div>
+            <div class="sc-stat-lbl">Isu Aktif</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">19</div>
+            <div class="sc-stat-lbl">Berpindah</div>
+          </div>
+          <div>
+            <div class="sc-stat-val">15</div>
+            <div class="sc-stat-lbl">Tangguh/SPMP</div>
+          </div>
+        </div>
+      </div>
+      <div class="session-card-foot">
+        <span>Tambah · Edit · Hapus rekod</span>
+        <span class="sc-link">Buka Rekod →</span>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- Quick Access -->
+  <div class="section-label">Akses Pantas</div>
+  <div class="quick-grid">
+    <a href="wbl-sesi2-2526.html" class="quick-btn">
+      <div class="quick-icon">📘</div>
+      <div class="quick-title">Agihan Kelas 25/26</div>
+      <div class="quick-sub">7 kelas · 150 pelajar</div>
+    </a>
+    <a href="wbl-sesi1.html" class="quick-btn">
+      <div class="quick-icon">📈</div>
+      <div class="quick-title">Penempatan Sesi 1</div>
+      <div class="quick-sub">90.7% · 118 pelajar</div>
+    </a>
+    <a href="wbl.html" class="quick-btn">
+      <div class="quick-icon">🗺️</div>
+      <div class="quick-title">Peta Penempatan</div>
+      <div class="quick-sub">Sesi 2 26/27 · Interaktif</div>
+    </a>
+    <a href="wbl-isu.html" class="quick-btn">
+      <div class="quick-icon">⚠️</div>
+      <div class="quick-title">Isu Pelajar</div>
+      <div class="quick-sub">34 rekod aktif</div>
+    </a>
+  </div>
+
+  <!-- Info Row -->
+  <div class="info-row">
+
+    <!-- Penempatan Progress -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Kadar Penempatan Mengikut Sesi</div>
+      </div>
+      <div class="panel-body">
+        <div class="progress-item">
+          <div class="pi-head">
+            <span>Sesi 2 2026/2027 <span style="color:var(--muted);font-size:11px;">(Semasa)</span></span>
+            <span style="color:var(--green);font-weight:800;">88.7%</span>
+          </div>
+          <div class="pi-sub">110 / 124 pelajar ditempatkan</div>
+          <div class="pi-track"><div class="pi-fill" style="width:88.7%;background:var(--green)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="pi-head">
+            <span>Sesi 1 2026/2027</span>
+            <span style="color:var(--accent);font-weight:800;">90.7%</span>
+          </div>
+          <div class="pi-sub">107 / 118 pelajar ditempatkan</div>
+          <div class="pi-track"><div class="pi-fill" style="width:90.7%;background:var(--accent)"></div></div>
+        </div>
+        <div class="progress-item">
+          <div class="pi-head">
+            <span>Sesi 2 2025/2026</span>
+            <span style="color:var(--cyan);font-weight:800;">Pendaftaran</span>
+          </div>
+          <div class="pi-sub">150 pelajar berdaftar · Data penempatan akan dikemaskini</div>
+          <div class="pi-track"><div class="pi-fill" style="width:100%;background:var(--cyan)"></div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Update log -->
+    <div class="panel">
+      <div class="panel-head">
+        <div class="panel-title">Log Kemaskini Terkini</div>
+      </div>
+      <div class="panel-body">
+        <div class="timeline-item">
+          <div class="tl-dot" style="background:var(--green)"></div>
+          <div class="tl-body">
+            <div class="tl-title">Dashboard Sesi 2 2026/27 dikemaskini</div>
+            <div class="tl-sub">124 pelajar · Peta &amp; carta baharu ditambah</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-dot" style="background:var(--accent)"></div>
+          <div class="tl-body">
+            <div class="tl-title">Isu Pelajar — 34 rekod aktif</div>
+            <div class="tl-sub">19 berpindah · 15 tangguh/SPMP</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-dot" style="background:var(--purple)"></div>
+          <div class="tl-body">
+            <div class="tl-title">Dashboard Sesi 1 2026/27 dinaik taraf</div>
+            <div class="tl-sub">Dark mode · Breadcrumb · Print stylesheet</div>
+          </div>
+        </div>
+        <div class="timeline-item">
+          <div class="tl-dot" style="background:var(--cyan)"></div>
+          <div class="tl-body">
+            <div class="tl-title">Sesi 2 2025/26 — Data pendaftaran lengkap</div>
+            <div class="tl-sub">150 pelajar · 7 kelas · 14 negeri</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<footer>WBL Hub &nbsp;·&nbsp; Dashboard Penempatan Pelajar WBL &nbsp;·&nbsp; Politeknik</footer>
+
+<script>
+// Dark mode
+const dmBtn = document.getElementById('dmToggle');
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  dmBtn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('wbl-theme', dark ? 'dark' : 'light');
+}
+applyTheme(localStorage.getItem('wbl-theme') === 'dark');
+dmBtn.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'light'));
+</script>
+
+</body>
+</html>
