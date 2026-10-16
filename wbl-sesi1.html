@@ -1,0 +1,849 @@
+<!DOCTYPE html>
+<html lang="ms" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WBL Sesi 1 2026/2027 — WBL Hub</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:        #f0f4f8;
+      --surface:   #ffffff;
+      --surface2:  #f8fafc;
+      --border:    #e2e8f0;
+      --text:      #1a202c;
+      --muted:     #64748b;
+      --accent:    #2563eb;
+      --blue-lt:   #eff6ff;
+      --green:     #16a34a;
+      --green-lt:  #f0fdf4;
+      --purple:    #7c3aed;
+      --purple-lt: #faf5ff;
+      --red:       #dc2626;
+      --red-lt:    #fef2f2;
+      --amber:     #d97706;
+      --amber-lt:  #fffbeb;
+      --teal:      #0d9488;
+      --teal-lt:   #f0fdfa;
+      --nav:       #0f172a;
+      --nav-acc:   #38bdf8;
+      --radius:    14px;
+      --shadow:    0 1px 4px rgba(0,0,0,.06), 0 4px 18px rgba(0,0,0,.06);
+    }
+    [data-theme="dark"] {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #273348;
+      --border:    #334155;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --blue-lt:   #1e3a5f;
+      --green-lt:  #14532d;
+      --purple-lt: #3b1f6e;
+      --red-lt:    #7f1d1d;
+      --amber-lt:  #78350f;
+      --teal-lt:   #134e4a;
+      --shadow:    0 1px 4px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.3);
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+      transition: background .25s, color .25s;
+    }
+
+    /* ── NAV ── */
+    header {
+      background: var(--nav);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 32px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .brand { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.3px; white-space: nowrap; }
+    .brand span { color: var(--nav-acc); }
+    header nav { display: flex; gap: 4px; flex: 1; flex-wrap: wrap; }
+    header nav a {
+      color: #94a3b8; text-decoration: none; font-size: 13px; font-weight: 500;
+      padding: 6px 12px; border-radius: 6px; transition: background .15s, color .15s;
+    }
+    header nav a:hover { background: rgba(255,255,255,.08); color: #e2e8f0; }
+    header nav a.active { background: rgba(56,189,248,.15); color: var(--nav-acc); }
+    .header-right { display: flex; align-items: center; gap: 16px; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #fff;
+    }
+
+    /* ── PAGE ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 36px 24px 72px; }
+
+    .page-head {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 32px; flex-wrap: wrap; gap: 12px;
+    }
+    .page-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+    .page-head p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 14px; font-size: 12px;
+      color: var(--muted); font-weight: 500;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-bottom: 28px; }
+    .kpi {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 20px; box-shadow: var(--shadow);
+      position: relative; overflow: hidden;
+    }
+    .kpi::before {
+      content: ''; position: absolute; top: 0; left: 0; right: 0;
+      height: 3px; border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi.blue::before   { background: var(--accent); }
+    .kpi.green::before  { background: var(--green); }
+    .kpi.amber::before  { background: var(--amber); }
+    .kpi.purple::before { background: var(--purple); }
+    .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 6px; }
+    .kpi-val { font-size: 36px; font-weight: 900; line-height: 1; letter-spacing: -1.5px; }
+    .kpi-val.blue   { color: var(--accent); }
+    .kpi-val.green  { color: var(--green); }
+    .kpi-val.amber  { color: var(--amber); }
+    .kpi-val.purple { color: var(--purple); }
+    .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .kpi-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 600; padding: 3px 8px; border-radius: 20px; margin-top: 10px;
+    }
+    .kpi-pill.green  { background: var(--green-lt); color: var(--green); }
+    .kpi-pill.amber  { background: var(--amber-lt); color: var(--amber); }
+    .kpi-pill.blue   { background: var(--blue-lt);  color: var(--accent); }
+    .kpi-pill.purple { background: var(--purple-lt); color: var(--purple); }
+
+    /* ── PANEL ── */
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 15px; font-weight: 700; }
+    .panel-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .panel-body { padding: 22px; }
+
+    /* ── GRIDS ── */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .row-3 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; margin-bottom: 20px; }
+    .row-full { margin-bottom: 20px; }
+
+    /* ── DONUT ── */
+    .donut-wrap { display: flex; align-items: center; gap: 28px; }
+    .donut-chart-container { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
+    .donut-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .donut-center-val { font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+    .donut-center-lbl { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+    .legend { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 10px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-name { font-size: 13px; font-weight: 500; flex: 1; }
+    .legend-val { font-size: 14px; font-weight: 800; }
+    .legend-pct { font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+    /* ── PROGRAM CARDS ── */
+    .prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .prog-card { border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; }
+    .prog-card.dcs { border-top: 3px solid var(--accent); }
+    .prog-card.dcv { border-top: 3px solid var(--purple); }
+    .prog-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    .prog-name.dcs { color: var(--accent); }
+    .prog-name.dcv { color: var(--purple); }
+    .prog-total { font-size: 28px; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+    .prog-sub { font-size: 11px; color: var(--muted); margin-top: 3px; margin-bottom: 12px; }
+    .prog-bar-row { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .prog-bar-meta { display: flex; justify-content: space-between; font-size: 11.5px; }
+    .prog-bar-name { color: var(--muted); }
+    .prog-bar-val { font-weight: 700; }
+    .prog-track { height: 7px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 4px; transition: width .6s ease; }
+
+    /* ── STATE BARS ── */
+    .state-list { display: flex; flex-direction: column; gap: 10px; }
+    .state-row { display: flex; align-items: center; gap: 12px; }
+    .state-name { font-size: 12.5px; font-weight: 500; width: 160px; flex-shrink: 0; }
+    .state-bar-wrap { flex: 1; height: 8px; background: #f1f5f9; border-radius: 4px; overflow: hidden; }
+    .state-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); transition: width .6s ease; }
+    .state-count { font-size: 12px; font-weight: 700; width: 28px; text-align: right; }
+
+    /* ── COMPANY TABLE ── */
+    .co-table { width: 100%; border-collapse: collapse; }
+    .co-table th {
+      text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .7px; color: var(--muted); padding: 8px 14px;
+      border-bottom: 2px solid var(--border); background: #f8fafc;
+    }
+    .co-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .co-table tr:last-child td { border-bottom: none; }
+    .co-table tr:hover td { background: #f8fafc; }
+    .rank-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%; font-size: 11px; font-weight: 800;
+    }
+    .rank-1 { background: #fef3c7; color: #92400e; }
+    .rank-2 { background: #f3f4f6; color: #374151; }
+    .rank-3 { background: #fef2f2; color: #991b1b; }
+    .rank-n { background: #f1f5f9; color: var(--muted); }
+    .co-bar-cell { display: flex; align-items: center; gap: 8px; }
+    .co-mini-bar { height: 6px; border-radius: 3px; min-width: 4px; }
+    .prog-tag {
+      display: inline-flex; align-items: center; font-size: 10.5px; font-weight: 700;
+      padding: 2px 7px; border-radius: 10px; white-space: nowrap;
+    }
+    .prog-tag.dcs { background: var(--blue-lt); color: var(--accent); }
+    .prog-tag.dcv { background: var(--purple-lt); color: var(--purple); }
+    .prog-tag.both { background: var(--teal-lt); color: var(--teal); }
+
+    /* ── CHART ── */
+    .chart-container { position: relative; width: 100%; }
+    .chart-container.h240 { height: 240px; }
+    .chart-container.h300 { height: 300px; }
+    .chart-container.h340 { height: 340px; }
+    .chart-container.h400 { height: 400px; }
+
+    /* ── SUMMARY COMPARISON STRIP ── */
+    .compare-strip {
+      display: grid; grid-template-columns: repeat(3,1fr);
+      gap: 12px; margin-bottom: 20px;
+    }
+    .compare-tile {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 10px; padding: 14px 16px;
+      display: flex; flex-direction: column; gap: 4px;
+    }
+    .compare-tile-lbl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); }
+    .compare-tile-val { font-size: 22px; font-weight: 900; letter-spacing: -1px; }
+    .compare-tile-sub { font-size: 11px; color: var(--muted); }
+
+    /* ── DARK MODE FIXES ── */
+    .prog-track { background: var(--border); }
+    .state-bar-wrap { background: var(--border); }
+    .co-table th { background: var(--surface2); }
+    .co-table tr:hover td { background: var(--surface2); }
+    .rank-n { background: var(--border); }
+
+    /* ── BREADCRUMB ── */
+    .breadcrumb {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 8px 32px; display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 600; }
+
+    /* Dark mode toggle */
+    .dm-toggle {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+      border-radius: 20px; padding: 5px 12px; cursor: pointer;
+      font-size: 12px; font-weight: 600; color: #cbd5e1; transition: background .15s;
+    }
+    .dm-toggle:hover { background: rgba(255,255,255,.14); }
+
+    /* Nav badge */
+    .nav-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 17px; height: 17px; border-radius: 20px; padding: 0 5px;
+      background: var(--red); color: #fff; font-size: 10px; font-weight: 800; margin-left: 4px;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 18px; font-size: 11px;
+      color: #94a3b8; border-top: 1px solid var(--border); margin-top: 48px;
+    }
+
+    /* ── PRINT ── */
+    @media print {
+      header, .breadcrumb { display: none !important; }
+      .page { padding: 16px !important; }
+      .panel { break-inside: avoid; box-shadow: none !important; border: 1px solid #ccc !important; }
+      .kpi   { break-inside: avoid; box-shadow: none !important; }
+      * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .row-2, .row-3 { grid-template-columns: 1fr; }
+      .compare-strip { grid-template-columns: 1fr; }
+      .breadcrumb { padding: 8px 16px; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .page { padding: 20px 16px 48px; }
+      header nav a { display: none; }
+      header nav a.active { display: inline-flex; }
+      .donut-wrap { flex-direction: column; }
+      .prog-grid { grid-template-columns: 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<header>
+  <div class="brand">WBL <span>Hub</span></div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="wbl-sesi2-2526.html">Sesi 2 2025/26</a>
+    <a href="wbl-sesi1.html" class="active">Sesi 1 2026/27</a>
+    <a href="wbl.html">Sesi 2 2026/27</a>
+    <a href="wbl-isu.html">Isu Pelajar <span class="nav-badge">34</span></a>
+  </nav>
+  <div class="header-right">
+    <button class="dm-toggle" id="dmToggle">🌙 Dark</button>
+    <div class="avatar">WBL</div>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="index.html">🏠 Home</a>
+  <span class="sep">›</span>
+  <a href="wbl-sesi1.html">WBL</a>
+  <span class="sep">›</span>
+  <span class="current">Sesi 1 2026/2027</span>
+  <span style="margin-left:auto;font-size:11px;color:var(--muted)">118 pelajar · 90.7% ditempatkan</span>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- Heading -->
+  <div class="page-head">
+    <div>
+      <h1>Statistik Pelajar WBL</h1>
+      <p>Work-Based Learning · Sesi 1 2026/2027 · Program DCV &amp; DCS</p>
+    </div>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Data terkini · September 2026
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="section-label">Ringkasan Keseluruhan</div>
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="kpi-label">Jumlah Pelajar</div>
+      <div class="kpi-val blue">118</div>
+      <div class="kpi-sub">DCV + DCS (semua kelas)</div>
+      <div class="kpi-pill blue">↑ 6 kelas aktif</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Sudah Dapat Tempat</div>
+      <div class="kpi-val green">107</div>
+      <div class="kpi-sub">Telah disahkan penempatan</div>
+      <div class="kpi-pill green">✓ 90.7% kadar penempatan</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Belum Dapat Tempat</div>
+      <div class="kpi-val amber">11</div>
+      <div class="kpi-sub">Masih dalam proses</div>
+      <div class="kpi-pill amber">⚠ 9.3% perlu tindakan</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Syarikat Terlibat</div>
+      <div class="kpi-val purple">74</div>
+      <div class="kpi-sub">DCS: 59 · DCV: 15</div>
+      <div class="kpi-pill purple">↑ Pelbagai industri</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Placement by Program -->
+  <div class="section-label">1 · Status Penempatan Ikut Program</div>
+  <div class="row-2">
+
+    <!-- Donut -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Keseluruhan Penempatan</div>
+          <div class="panel-sub">Status dapat / belum dapat tempat — semua program</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="donut-wrap">
+          <div class="donut-chart-container">
+            <canvas id="overallDonut"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" style="color:var(--green)">91%</div>
+              <div class="donut-center-lbl">Ditempatkan</div>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#16a34a"></div>
+              <div class="legend-name">Sudah Dapat Tempat</div>
+              <div>
+                <span class="legend-val">107</span>
+                <span class="legend-pct">(90.7%)</span>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#d97706"></div>
+              <div class="legend-name">Belum Dapat Tempat</div>
+              <div>
+                <span class="legend-val">11</span>
+                <span class="legend-pct">(9.3%)</span>
+              </div>
+            </div>
+            <div style="margin-top:4px;padding-top:12px;border-top:1px solid var(--border);">
+              <div style="font-size:12px;color:var(--muted);">Jumlah Keseluruhan</div>
+              <div style="font-size:20px;font-weight:900;letter-spacing:-1px;">118 pelajar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Program Comparison -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Perbandingan DCV vs DCS</div>
+          <div class="panel-sub">Status penempatan ikut program</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="prog-grid">
+          <div class="prog-card dcs">
+            <div class="prog-name dcs">Program DCS</div>
+            <div class="prog-total">76</div>
+            <div class="prog-sub">DCS 4A (27) + 4B (26) + 4C (23)</div>
+            <div class="prog-bar-row">
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Dapat Tempat</span>
+                  <span class="prog-bar-val" style="color:var(--green)">70 (92.1%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" style="width:92.1%;background:var(--green)"></div></div>
+              </div>
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Belum Dapat</span>
+                  <span class="prog-bar-val" style="color:var(--amber)">6 (7.9%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" style="width:7.9%;background:var(--amber)"></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="prog-card dcv">
+            <div class="prog-name dcv">Program DCV</div>
+            <div class="prog-total">42</div>
+            <div class="prog-sub">DCV 4A (19) + 4B (21) + 4C</div>
+            <div class="prog-bar-row">
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Dapat Tempat</span>
+                  <span class="prog-bar-val" style="color:var(--green)">37 (88.1%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" style="width:88.1%;background:var(--green)"></div></div>
+              </div>
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Belum Dapat</span>
+                  <span class="prog-bar-val" style="color:var(--amber)">5 (11.9%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" style="width:11.9%;background:var(--amber)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div style="margin-top:20px;">
+          <div class="chart-container h240">
+            <canvas id="programBar"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Section 2: By State -->
+  <div class="section-label">2 · Statistik Mengikut Negeri</div>
+  <div class="row-3">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Jumlah Pelajar Mengikut Negeri</div>
+          <div class="panel-sub">Semua program WBL Sesi 1 2026/2027</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container h340">
+          <canvas id="stateBar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Senarai Negeri</div>
+          <div class="panel-sub">Bilangan pelajar per negeri</div>
+        </div>
+      </div>
+      <div class="panel-body" style="padding-top:16px;">
+        <div class="state-list" id="stateList"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Section 3: By Company -->
+  <div class="section-label">3 · Statistik Mengikut Syarikat</div>
+  <div class="row-full">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Syarikat Mengikut Bilangan Pelajar</div>
+          <div class="panel-sub">Top 15 syarikat penerima pelajar WBL — DCS &amp; DCV</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container h400">
+          <canvas id="companyBar"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-full">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Jadual Penempatan Syarikat</div>
+          <div class="panel-sub">Senarai lengkap 74 syarikat &amp; bilangan pelajar</div>
+        </div>
+        <div>
+          <span class="prog-tag dcs" style="margin-right:4px">DCS</span>
+          <span class="prog-tag dcv">DCV</span>
+        </div>
+      </div>
+      <div class="panel-body" style="padding:0;">
+        <div style="overflow-x:auto;">
+          <table class="co-table">
+            <thead>
+              <tr>
+                <th style="width:48px">#</th>
+                <th>Nama Syarikat</th>
+                <th>Program</th>
+                <th>Bilangan</th>
+                <th>Visualisasi</th>
+              </tr>
+            </thead>
+            <tbody id="companyTableBody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<footer>WBL Hub &nbsp;·&nbsp; Sesi 1 2026/2027 &nbsp;·&nbsp; Data: DATAWBL2.xlsx</footer>
+
+<script>
+// ══ DATA (DATAWBL2.xlsx — Sesi 1 2026/2027) ══════════════
+// Total: 118 | Placed: 107 | Unplaced: 11
+// DCS: 76 (placed 70, unplaced 6) | DCV: 42 (placed 37, unplaced 5)
+
+const STATES = [
+  { name: "Kedah",           count: 30 },
+  { name: "Selangor",        count: 24 },
+  { name: "Pulau Pinang",    count: 13 },
+  { name: "Perak",           count: 11 },
+  { name: "Perlis",          count: 11 },
+  { name: "Negeri Sembilan", count: 5  },
+  { name: "Kelantan",        count: 3  },
+  { name: "Kuala Lumpur",    count: 3  },
+  { name: "Johor",           count: 1  },
+  { name: "Sabah",           count: 1  },
+  { name: "Terengganu",      count: 1  },
+];
+
+// Companies: DCS=59 syarikat, DCV=15 syarikat. 
+// Kolumn X/Y (DCS count) / Z (DCV count) dari Calc_Data
+const COMPANIES = [
+  { name: "Kunang Pictures Group Sdn. Bhd.",                   dcs: 0,  dcv: 9  },
+  { name: "Khulafa Media Sdn. Bhd.",                           dcs: 0,  dcv: 5  },
+  { name: "SCIMPA (UUM)",                                      dcs: 0,  dcv: 5  },
+  { name: "D'Mainiza Pictures Two Sdn Bhd",                    dcs: 0,  dcv: 4  }, // DCS 1 + DCV 3
+  { name: "Visual Three Productions (M) Sdn. Bhd.",           dcs: 0,  dcv: 3  },
+  { name: "Unit Keusahawanan (PTSS)",                          dcs: 0,  dcv: 3  },
+  { name: "Rebong My Streetwear",                              dcs: 3,  dcv: 0  },
+  { name: "TM Network Sdn. Bhd.",                              dcs: 3,  dcv: 0  },
+  { name: "AB Design & Printing",                              dcs: 2,  dcv: 0  },
+  { name: "All Be Connect Technology Sdn. Bhd.",               dcs: 2,  dcv: 0  },
+  { name: "Geliga Global Sdn. Bhd.",                           dcs: 2,  dcv: 0  },
+  { name: "Guidepro Resources",                                dcs: 2,  dcv: 0  },
+  { name: "ID Prosound Event Management Sdn. Bhd.",            dcs: 0,  dcv: 2  },
+  { name: "Pendekar Nomad Enterprise",                         dcs: 2,  dcv: 0  },
+  { name: "Taman Buaya Langkawi Sdn. Bhd.",                   dcs: 2,  dcv: 0  },
+  { name: "VNC Production",                                    dcs: 2,  dcv: 0  },
+  { name: "ABS Advertising Sdn. Bhd.",                        dcs: 1,  dcv: 0  },
+  { name: "AHBA Niaga Iklan",                                  dcs: 1,  dcv: 0  },
+  { name: "Ain Flavour Kingdom Sdn. Bhd.",                    dcs: 1,  dcv: 0  },
+  { name: "Ana Muslim Sdn. Bhd.",                              dcs: 1,  dcv: 0  },
+  { name: "Arimas Design & Printing House",                   dcs: 1,  dcv: 0  },
+  { name: "Athanliz Innovations Sdn Bhd",                     dcs: 0,  dcv: 1  },
+  { name: "Chocolate Mansion",                                 dcs: 1,  dcv: 0  },
+  { name: "Color Studio Design & Print",                      dcs: 1,  dcv: 0  },
+  { name: "CTI Resources Sdn. Bhd.",                          dcs: 1,  dcv: 0  },
+  { name: "Delima Design Works",                               dcs: 1,  dcv: 0  },
+  { name: "Destina 1 International Sdn Bhd",                  dcs: 1,  dcv: 0  },
+  { name: "Embun Lighting & Decoration Sdn. Bhd.",            dcs: 1,  dcv: 0  },
+  { name: "Excellent Photo Studio",                            dcs: 1,  dcv: 0  },
+  { name: "Ezy Banner",                                        dcs: 1,  dcv: 0  },
+  { name: "Fathini Creative Resources",                        dcs: 1,  dcv: 0  },
+  { name: "GP Creative",                                       dcs: 1,  dcv: 0  },
+  { name: "Green Sustaine Sdn Bhd",                           dcs: 1,  dcv: 0  },
+  { name: "Gromex Graphic (M) Sdn. Bhd.",                     dcs: 1,  dcv: 0  },
+  { name: "Heritage Quest Travel Sdn. Bhd.",                  dcs: 1,  dcv: 0  },
+  { name: "HNZ Enterprise",                                    dcs: 1,  dcv: 0  },
+  { name: "Hot Print Media PLT",                               dcs: 1,  dcv: 0  },
+  { name: "Huang Long Creation",                               dcs: 1,  dcv: 0  },
+  { name: "Image Hub Photo & Printing Services",              dcs: 1,  dcv: 0  },
+  { name: "Imika Kulim",                                       dcs: 1,  dcv: 0  },
+  { name: "Infra Holding Sdn. Bhd.",                          dcs: 1,  dcv: 0  },
+  { name: "Jabatan Penyiaran Malaysia Perlis",                dcs: 1,  dcv: 0  },
+  { name: "Khalifah Media Networks (M) Sdn. Bhd.",           dcs: 0,  dcv: 1  },
+  { name: "Kinocinema Media",                                  dcs: 0,  dcv: 1  },
+  { name: "KK Line One Sdn Bhd",                              dcs: 1,  dcv: 0  },
+  { name: "KWJ Empire Sdn Bhd",                               dcs: 1,  dcv: 0  },
+  { name: "Mahthika Global Sdn. Bhd.",                        dcs: 1,  dcv: 0  },
+  { name: "Majlis Bandaraya Ipoh",                             dcs: 1,  dcv: 0  },
+  { name: "Majlis Daerah Padang Terap",                       dcs: 1,  dcv: 0  },
+  { name: "Maryam Khadijah Group Sdn. Bhd.",                  dcs: 1,  dcv: 0  },
+  { name: "Minii's Party Direct",                             dcs: 1,  dcv: 0  },
+  { name: "Moza Design",                                       dcs: 1,  dcv: 0  },
+  { name: "PDC Group Industries Sdn. Bhd",                    dcs: 1,  dcv: 0  },
+  { name: "Pejabat Pendidikan Daerah Langkawi",               dcs: 1,  dcv: 0  },
+  { name: "Pekanmaya Sdn Bhd",                                dcs: 1,  dcv: 0  },
+  { name: "Persatuan Profesional Filem Malaysia (PROFIMA)",   dcs: 0,  dcv: 1  },
+  { name: "Piala Prestij Sdn. Bhd.",                          dcs: 1,  dcv: 0  },
+  { name: "Politeknik Besut Terengganu",                      dcs: 1,  dcv: 0  },
+  { name: "PTTI Group Sdn Bhd",                               dcs: 1,  dcv: 0  },
+  { name: "Reino Creative Group Sdn. Bhd.",                   dcs: 1,  dcv: 0  },
+  { name: "Resource Centre JRKV (PTSS)",                      dcs: 0,  dcv: 1  },
+  { name: "RFQIN Store",                                       dcs: 1,  dcv: 0  },
+  { name: "Ridz Print",                                        dcs: 1,  dcv: 0  },
+  { name: "Sathis Studio",                                     dcs: 1,  dcv: 0  },
+  { name: "SOHHO Advertising & Engineering",                  dcs: 1,  dcv: 0  },
+  { name: "Sol Pictures Sdn. Bhd.",                           dcs: 1,  dcv: 0  },
+  { name: "Surffix Enterprise",                                dcs: 1,  dcv: 0  },
+  { name: "Taman Sultan Badlishah Superstore Sdn. Bhd.",      dcs: 1,  dcv: 0  },
+  { name: "TC Ah Boy Motor Enterprise",                       dcs: 1,  dcv: 0  },
+  { name: "The Ells Global",                                   dcs: 1,  dcv: 0  },
+  { name: "Tzadruce Empire Trading",                           dcs: 1,  dcv: 0  },
+  { name: "Verz Global Sdn Bhd",                               dcs: 1,  dcv: 0  },
+];
+
+// Sort by total descending
+COMPANIES.sort((a, b) => (b.dcs + b.dcv) - (a.dcs + a.dcv));
+
+// ── CHART DEFAULTS ──────────────────────────────────────
+Chart.defaults.font.family = '-apple-system, "Segoe UI", system-ui, sans-serif';
+Chart.defaults.color       = '#64748b';
+
+// ── 1. OVERALL DONUT ───────────────────────────────────
+new Chart(document.getElementById('overallDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Sudah Dapat Tempat', 'Belum Dapat Tempat'],
+    datasets: [{
+      data: [107, 11],
+      backgroundColor: ['#16a34a', '#d97706'],
+      borderWidth: 3, borderColor: '#ffffff', hoverBorderWidth: 3,
+    }]
+  },
+  options: {
+    cutout: '72%', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.label}: ${ctx.raw} pelajar (${((ctx.raw/118)*100).toFixed(1)}%)` } }
+    }
+  }
+});
+
+// ── 2. PROGRAM GROUPED BAR ──────────────────────────────
+new Chart(document.getElementById('programBar'), {
+  type: 'bar',
+  data: {
+    labels: ['DCS (76 pelajar)', 'DCV (42 pelajar)'],
+    datasets: [
+      { label: 'Sudah Dapat Tempat', data: [70, 37], backgroundColor: '#16a34a', borderRadius: 6, borderSkipped: false },
+      { label: 'Belum Dapat Tempat', data: [6, 5],   backgroundColor: '#fde68a', borderRadius: 6, borderSkipped: false },
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { boxWidth: 10, boxHeight: 10, borderRadius: 5, useBorderRadius: true, padding: 16, font: { size: 12 } }
+      },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} pelajar` } }
+    },
+    scales: {
+      x: { stacked: true, grid: { color: '#f1f5f9' }, border: { dash: [4,4] }, ticks: { font: { size: 11 } } },
+      y: { stacked: true, grid: { display: false }, ticks: { font: { size: 12 } } }
+    }
+  }
+});
+
+// ── 3. STATE BAR ────────────────────────────────────────
+const maxState = Math.max(...STATES.map(s => s.count));
+new Chart(document.getElementById('stateBar'), {
+  type: 'bar',
+  data: {
+    labels: STATES.map(s => s.name),
+    datasets: [{
+      label: 'Jumlah Pelajar',
+      data: STATES.map(s => s.count),
+      backgroundColor: STATES.map(s => `rgba(37,99,235,${0.35 + (s.count/maxState)*0.65})`),
+      borderRadius: 6, borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: { callbacks: { label: ctx => ` ${ctx.raw} pelajar` } }
+    },
+    scales: {
+      x: { grid: { color: '#f1f5f9' }, border: { dash: [4,4] }, ticks: { font: { size: 11 } } },
+      y: { grid: { display: false }, ticks: { font: { size: 12 } } }
+    }
+  }
+});
+
+// ── 4. COMPANY BAR (Top 15, stacked DCS+DCV) ───────────
+const top15 = COMPANIES.slice(0, 15);
+new Chart(document.getElementById('companyBar'), {
+  type: 'bar',
+  data: {
+    labels: top15.map(c => c.name.length > 34 ? c.name.substring(0,32)+'…' : c.name),
+    datasets: [
+      {
+        label: 'DCS', data: top15.map(c => c.dcs),
+        backgroundColor: '#3b82f6', borderRadius: 5, borderSkipped: false,
+      },
+      {
+        label: 'DCV', data: top15.map(c => c.dcv),
+        backgroundColor: '#8b5cf6', borderRadius: 5, borderSkipped: false,
+      }
+    ]
+  },
+  options: {
+    indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { boxWidth: 10, boxHeight: 10, borderRadius: 5, useBorderRadius: true, padding: 16, font: { size: 12 } }
+      },
+      tooltip: {
+        callbacks: {
+          title: ctx => COMPANIES[ctx[0].dataIndex].name,
+          label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} pelajar`
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, grid: { color: '#f1f5f9' }, border: { dash: [4,4] }, ticks: { stepSize: 1, font: { size: 11 } } },
+      y: { stacked: true, grid: { display: false }, ticks: { font: { size: 11.5 } } }
+    }
+  }
+});
+
+// ── STATE LIST ──────────────────────────────────────────
+const stateListEl = document.getElementById('stateList');
+STATES.forEach(s => {
+  const pct = Math.round(s.count / maxState * 100);
+  stateListEl.innerHTML += `
+    <div class="state-row">
+      <div class="state-name">${s.name}</div>
+      <div class="state-bar-wrap"><div class="state-bar-fill" style="width:${pct}%"></div></div>
+      <div class="state-count">${s.count}</div>
+    </div>`;
+});
+
+// ── COMPANY TABLE ───────────────────────────────────────
+const maxCo = COMPANIES[0].dcs + COMPANIES[0].dcv;
+const tbody = document.getElementById('companyTableBody');
+COMPANIES.forEach((c, i) => {
+  const total = c.dcs + c.dcv;
+  const rankClass = i === 0 ? 'rank-1' : i === 1 ? 'rank-2' : i === 2 ? 'rank-3' : 'rank-n';
+  const barW = Math.max(6, (total / maxCo) * 90);
+  let tag = c.dcs > 0 && c.dcv > 0
+    ? `<span class="prog-tag both">DCS+DCV</span>`
+    : c.dcs > 0
+      ? `<span class="prog-tag dcs">DCS</span>`
+      : `<span class="prog-tag dcv">DCV</span>`;
+
+  tbody.innerHTML += `
+    <tr>
+      <td><span class="rank-badge ${rankClass}">${i+1}</span></td>
+      <td style="font-weight:500">${c.name}</td>
+      <td>${tag}</td>
+      <td><strong>${total}</strong> <span style="color:var(--muted);font-size:11px">pelajar</span></td>
+      <td>
+        <div class="co-bar-cell">
+          ${c.dcs > 0 ? `<div class="co-mini-bar" style="width:${Math.max(4,c.dcs/maxCo*70)}px;background:#3b82f6"></div>` : ''}
+          ${c.dcv > 0 ? `<div class="co-mini-bar" style="width:${Math.max(4,c.dcv/maxCo*70)}px;background:#8b5cf6"></div>` : ''}
+        </div>
+      </td>
+    </tr>`;
+});
+</script>
+
+<script>
+// Dark mode
+const dmBtn = document.getElementById('dmToggle');
+function applyTheme(dark) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light');
+  dmBtn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('wbl-theme', dark ? 'dark' : 'light');
+}
+applyTheme(localStorage.getItem('wbl-theme') === 'dark');
+dmBtn.addEventListener('click', () => applyTheme(document.documentElement.getAttribute('data-theme') === 'light'));
+</script>
+
+</body>
+</html>
