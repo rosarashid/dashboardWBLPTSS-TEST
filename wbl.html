@@ -1,0 +1,1572 @@
+<!DOCTYPE html>
+<html lang="ms" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>WBL Statistik Pelajar — TVET Hub</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.3/dist/chart.umd.min.js"></script>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    /* ── THEME VARIABLES ── */
+    :root {
+      --bg:        #f0f4f8;
+      --surface:   #ffffff;
+      --surface2:  #f8fafc;
+      --border:    #e2e8f0;
+      --text:      #1a202c;
+      --muted:     #64748b;
+      --accent:    #2563eb;
+      --blue-lt:   #eff6ff;
+      --green:     #16a34a;
+      --green-lt:  #f0fdf4;
+      --purple:    #7c3aed;
+      --purple-lt: #faf5ff;
+      --red:       #dc2626;
+      --red-lt:    #fef2f2;
+      --amber:     #d97706;
+      --amber-lt:  #fffbeb;
+      --teal:      #0d9488;
+      --teal-lt:   #f0fdfa;
+      --nav:       #0f172a;
+      --nav-acc:   #38bdf8;
+      --radius:    14px;
+      --shadow:    0 1px 4px rgba(0,0,0,.06), 0 4px 18px rgba(0,0,0,.06);
+    }
+    [data-theme="dark"] {
+      --bg:        #0f172a;
+      --surface:   #1e293b;
+      --surface2:  #273348;
+      --border:    #334155;
+      --text:      #f1f5f9;
+      --muted:     #94a3b8;
+      --blue-lt:   #1e3a5f;
+      --green-lt:  #14532d;
+      --purple-lt: #3b1f6e;
+      --red-lt:    #7f1d1d;
+      --amber-lt:  #78350f;
+      --teal-lt:   #134e4a;
+      --shadow:    0 1px 4px rgba(0,0,0,.3), 0 4px 18px rgba(0,0,0,.3);
+    }
+
+    body {
+      font-family: -apple-system, "Segoe UI", system-ui, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      font-size: 14px;
+      line-height: 1.6;
+      transition: background .25s, color .25s;
+    }
+
+    /* ── NAV ── */
+    header {
+      background: var(--nav);
+      height: 60px;
+      display: flex;
+      align-items: center;
+      padding: 0 32px;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      gap: 24px;
+      border-bottom: 1px solid rgba(255,255,255,.06);
+    }
+    .brand { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: -.3px; white-space: nowrap; }
+    .brand span { color: var(--nav-acc); }
+    header nav { display: flex; gap: 4px; flex: 1; }
+    header nav a {
+      color: #94a3b8; text-decoration: none; font-size: 13px; font-weight: 500;
+      padding: 6px 12px; border-radius: 6px; transition: background .15s, color .15s;
+    }
+    header nav a:hover { background: rgba(255,255,255,.08); color: #e2e8f0; }
+    header nav a.active { background: rgba(56,189,248,.15); color: var(--nav-acc); }
+    .header-right { display: flex; align-items: center; gap: 12px; }
+    .avatar {
+      width: 32px; height: 32px; border-radius: 50%;
+      background: linear-gradient(135deg, #3b82f6, #7c3aed);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 11px; font-weight: 800; color: #fff;
+    }
+
+    /* Dark mode toggle */
+    .dm-toggle {
+      background: rgba(255,255,255,.08); border: 1px solid rgba(255,255,255,.14);
+      border-radius: 20px; padding: 5px 12px; cursor: pointer;
+      font-size: 12px; font-weight: 600; color: #cbd5e1;
+      display: flex; align-items: center; gap: 6px; transition: background .15s;
+    }
+    .dm-toggle:hover { background: rgba(255,255,255,.14); }
+
+    /* Nav badge */
+    .nav-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      min-width: 17px; height: 17px; border-radius: 20px; padding: 0 5px;
+      background: var(--red); color: #fff; font-size: 10px; font-weight: 800; margin-left: 4px;
+    }
+
+    /* ── BREADCRUMB ── */
+    .breadcrumb {
+      background: var(--surface); border-bottom: 1px solid var(--border);
+      padding: 8px 32px; display: flex; align-items: center; gap: 6px;
+      font-size: 12px; color: var(--muted);
+    }
+    .breadcrumb a { color: var(--muted); text-decoration: none; transition: color .15s; }
+    .breadcrumb a:hover { color: var(--accent); }
+    .breadcrumb .sep { color: var(--border); }
+    .breadcrumb .current { color: var(--text); font-weight: 600; }
+
+    /* ── FILTER BAR ── */
+    .filter-bar {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 10px 32px;
+      display: flex; align-items: center; gap: 8px;
+      position: sticky; top: 60px; z-index: 90;
+      box-shadow: 0 2px 8px rgba(0,0,0,.04);
+    }
+    .filter-label { font-size: 12px; font-weight: 700; color: var(--muted); margin-right: 4px; }
+    .filter-btn {
+      padding: 5px 16px; border-radius: 20px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--muted); transition: all .15s;
+    }
+    .filter-btn.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .filter-btn:hover:not(.active) { border-color: var(--accent); color: var(--accent); }
+    .filter-sep { width: 1px; height: 20px; background: var(--border); margin: 0 4px; }
+    .filter-right { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+
+    /* Export button */
+    .btn-export {
+      padding: 5px 14px; border-radius: 8px; font-size: 12px; font-weight: 600;
+      cursor: pointer; border: 1.5px solid var(--border); background: var(--surface);
+      color: var(--muted); display: flex; align-items: center; gap: 6px; transition: all .15s;
+    }
+    .btn-export:hover { border-color: var(--green); color: var(--green); background: var(--green-lt); }
+
+    /* ── PAGE ── */
+    .page { max-width: 1200px; margin: 0 auto; padding: 32px 24px 72px; }
+
+    .page-head {
+      display: flex; align-items: flex-end; justify-content: space-between;
+      margin-bottom: 28px; flex-wrap: wrap; gap: 12px;
+    }
+    .page-head h1 { font-size: 22px; font-weight: 800; letter-spacing: -.4px; }
+    .page-head p { font-size: 13px; color: var(--muted); margin-top: 4px; }
+    .badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 7px 14px; font-size: 12px;
+      color: var(--muted); font-weight: 500;
+    }
+    .badge-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.4} }
+
+    /* ── SECTION LABEL ── */
+    .section-label {
+      font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: 1px; color: var(--muted); margin-bottom: 14px;
+      display: flex; align-items: center; gap: 8px;
+    }
+    .section-label::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+    /* ── KPI CARDS ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-bottom: 28px;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 22px 20px;
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+      transition: transform .18s, box-shadow .18s;
+    }
+    .kpi:hover { transform: translateY(-2px); box-shadow: 0 4px 24px rgba(0,0,0,.1); }
+    .kpi::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 3px;
+      border-radius: var(--radius) var(--radius) 0 0;
+    }
+    .kpi.blue::before   { background: var(--accent); }
+    .kpi.green::before  { background: var(--green); }
+    .kpi.amber::before  { background: var(--amber); }
+    .kpi.purple::before { background: var(--purple); }
+    .kpi-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 6px; }
+    .kpi-val { font-size: 36px; font-weight: 900; line-height: 1; letter-spacing: -1.5px; }
+    .kpi-val.blue   { color: var(--accent); }
+    .kpi-val.green  { color: var(--green); }
+    .kpi-val.amber  { color: var(--amber); }
+    .kpi-val.purple { color: var(--purple); }
+    .kpi-sub { font-size: 12px; color: var(--muted); margin-top: 6px; }
+    .kpi-pill {
+      display: inline-flex; align-items: center; gap: 4px;
+      font-size: 11px; font-weight: 600;
+      padding: 3px 8px; border-radius: 20px; margin-top: 10px;
+    }
+    .kpi-pill.green  { background: var(--green-lt); color: var(--green); }
+    .kpi-pill.amber  { background: var(--amber-lt); color: var(--amber); }
+    .kpi-pill.blue   { background: var(--blue-lt);  color: var(--accent); }
+    .kpi-pill.purple { background: var(--purple-lt); color: var(--purple); }
+
+    /* Alert badge for low placement */
+    .alert-badge {
+      display: inline-flex; align-items: center; gap: 5px;
+      background: var(--red-lt); color: var(--red);
+      font-size: 11px; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px; margin-top: 10px;
+    }
+
+    /* ── PANEL ── */
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+    }
+    .panel-head {
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+    }
+    .panel-title { font-size: 15px; font-weight: 700; }
+    .panel-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .panel-body { padding: 22px; }
+
+    /* ── ROW GRIDS ── */
+    .row-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 20px; }
+    .row-3 { display: grid; grid-template-columns: 1.1fr 0.9fr; gap: 20px; margin-bottom: 20px; }
+    .row-full { margin-bottom: 20px; }
+
+    /* ── DONUT LEGEND ── */
+    .donut-wrap { display: flex; align-items: center; gap: 28px; }
+    .donut-chart-container { position: relative; width: 180px; height: 180px; flex-shrink: 0; }
+    .donut-center {
+      position: absolute; inset: 0;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .donut-center-val { font-size: 26px; font-weight: 900; letter-spacing: -1px; }
+    .donut-center-lbl { font-size: 11px; color: var(--muted); font-weight: 500; margin-top: 1px; }
+    .legend { display: flex; flex-direction: column; gap: 12px; flex: 1; }
+    .legend-item { display: flex; align-items: center; gap: 10px; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-name { font-size: 13px; font-weight: 500; flex: 1; }
+    .legend-val { font-size: 14px; font-weight: 800; }
+    .legend-pct { font-size: 11px; color: var(--muted); margin-left: 4px; }
+
+    /* ── PROGRAM COMPARE ── */
+    .prog-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    .prog-card {
+      border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 18px;
+      background: var(--surface);
+    }
+    .prog-card.dcs { border-top: 3px solid var(--accent); }
+    .prog-card.dcv { border-top: 3px solid var(--purple); }
+    .prog-name { font-size: 13px; font-weight: 700; margin-bottom: 10px; }
+    .prog-name.dcs { color: var(--accent); }
+    .prog-name.dcv { color: var(--purple); }
+    .prog-total { font-size: 28px; font-weight: 900; line-height: 1; letter-spacing: -1px; }
+    .prog-sub { font-size: 11px; color: var(--muted); margin-top: 3px; margin-bottom: 12px; }
+    .prog-bar-row { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+    .prog-bar-meta { display: flex; justify-content: space-between; font-size: 11.5px; }
+    .prog-bar-name { color: var(--muted); }
+    .prog-bar-val { font-weight: 700; }
+    .prog-track { height: 7px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .prog-fill { height: 100%; border-radius: 4px; width: 0; transition: width .9s cubic-bezier(.4,0,.2,1); }
+
+    /* ── STATE BARS ── */
+    .state-list { display: flex; flex-direction: column; gap: 10px; }
+    .state-row { display: flex; align-items: center; gap: 12px; }
+    .state-name { font-size: 12.5px; font-weight: 500; width: 160px; flex-shrink: 0; color: var(--text); }
+    .state-bar-wrap { flex: 1; height: 8px; background: var(--border); border-radius: 4px; overflow: hidden; }
+    .state-bar-fill { height: 100%; border-radius: 4px; background: var(--accent); width: 0; transition: width .8s ease; }
+    .state-count { font-size: 12px; font-weight: 700; color: var(--text); width: 28px; text-align: right; }
+
+    /* ── COMPANY TABLE ── */
+    .co-table { width: 100%; border-collapse: collapse; }
+    .co-table th {
+      text-align: left; font-size: 11px; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .7px; color: var(--muted); padding: 8px 14px;
+      border-bottom: 2px solid var(--border); background: var(--surface2);
+      cursor: pointer; user-select: none; white-space: nowrap;
+    }
+    .co-table th:hover { color: var(--accent); }
+    .co-table th.sort-asc::after  { content: ' ↑'; color: var(--accent); }
+    .co-table th.sort-desc::after { content: ' ↓'; color: var(--accent); }
+    .co-table td { padding: 10px 14px; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .co-table tr:last-child td { border-bottom: none; }
+    .co-table tr:hover td { background: var(--surface2); cursor: pointer; }
+    .rank-badge {
+      display: inline-flex; align-items: center; justify-content: center;
+      width: 22px; height: 22px; border-radius: 50%;
+      font-size: 11px; font-weight: 800;
+    }
+    .rank-1 { background: #fef3c7; color: #92400e; }
+    .rank-2 { background: #f3f4f6; color: #374151; }
+    .rank-3 { background: #fef2f2; color: #991b1b; }
+    .rank-n { background: var(--border); color: var(--muted); }
+    .co-bar-cell { display: flex; align-items: center; gap: 8px; }
+    .co-mini-bar { height: 6px; border-radius: 3px; background: var(--accent); min-width: 4px; }
+    .co-count { font-weight: 700; }
+    .status-dot {
+      display: inline-flex; align-items: center; gap: 5px;
+      font-size: 11.5px; font-weight: 600; padding: 3px 9px;
+      border-radius: 20px;
+    }
+    .status-dot.placed { background: var(--green-lt); color: var(--green); }
+    .status-dot.notyet { background: var(--amber-lt); color: var(--amber); }
+
+    /* ── SEARCH BOX ── */
+    .search-wrap {
+      padding: 14px 22px; border-bottom: 1px solid var(--border);
+      display: flex; gap: 10px; align-items: center; flex-wrap: wrap;
+    }
+    .search-box {
+      display: flex; align-items: center; gap: 8px;
+      border: 1px solid var(--border); border-radius: 8px;
+      padding: 7px 12px; background: var(--surface2); flex: 1; min-width: 200px;
+    }
+    .search-box input {
+      border: none; background: transparent; outline: none;
+      font-size: 13px; color: var(--text); flex: 1;
+    }
+    .search-box input::placeholder { color: var(--muted); }
+    .search-count { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+    /* ── CHART CANVAS ── */
+    .chart-container { position: relative; width: 100%; }
+    .chart-container.h240 { height: 240px; }
+    .chart-container.h280 { height: 280px; }
+    .chart-container.h320 { height: 320px; }
+    .chart-container.h360 { height: 360px; }
+
+    /* ── TABS ── */
+    .tabs { display: flex; gap: 4px; margin-bottom: 18px; }
+    .tab {
+      padding: 6px 14px; border-radius: 8px; font-size: 12.5px; font-weight: 600;
+      cursor: pointer; border: 1px solid var(--border); background: transparent;
+      color: var(--muted); transition: all .15s;
+    }
+    .tab.active { background: var(--accent); color: #fff; border-color: var(--accent); }
+    .tab:hover:not(.active) { background: var(--blue-lt); color: var(--accent); border-color: #bfdbfe; }
+
+    /* ── MAP ── */
+    .map-section { margin-bottom: 20px; }
+    .map-layout { display: grid; grid-template-columns: 1.4fr 1fr; gap: 20px; align-items: start; }
+    .map-wrap {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .map-svg-container { padding: 20px; position: relative; }
+    .map-svg-container svg { width: 100%; height: auto; display: block; }
+    .state-path {
+      stroke: var(--surface);
+      stroke-width: 1.5;
+      cursor: pointer;
+      transition: opacity .18s, filter .18s;
+    }
+    .state-path:hover { opacity: .82; filter: brightness(1.12); }
+    .state-path.selected { stroke: var(--text); stroke-width: 2.5; filter: drop-shadow(0 2px 6px rgba(0,0,0,.22)); }
+
+    .map-tooltip {
+      position: fixed;
+      background: #1a202c;
+      color: #fff;
+      border-radius: 8px;
+      padding: 10px 14px;
+      font-size: 12.5px;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0;
+      transition: opacity .12s;
+      min-width: 160px;
+      box-shadow: 0 4px 16px rgba(0,0,0,.28);
+    }
+    .map-tooltip.show { opacity: 1; }
+    .map-tooltip-name { font-weight: 800; font-size: 13px; margin-bottom: 4px; }
+    .map-tooltip-row { display: flex; justify-content: space-between; gap: 16px; color: #cbd5e1; }
+    .map-tooltip-val { color: #fff; font-weight: 700; }
+
+    .map-legend {
+      display: flex; align-items: center; gap: 8px;
+      padding: 12px 20px 16px;
+      border-top: 1px solid var(--border);
+      font-size: 11.5px; color: var(--muted);
+    }
+    .map-legend-grad {
+      flex: 1; height: 10px; border-radius: 5px;
+      background: linear-gradient(to right, #dbeafe, #1d4ed8);
+    }
+    .map-legend-label { font-weight: 600; }
+
+    /* ── STATE INFO PANEL ── */
+    .state-info-panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+    .state-info-head {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .state-info-name { font-size: 17px; font-weight: 800; letter-spacing: -.3px; }
+    .state-info-sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+    .state-info-kpi {
+      display: grid; grid-template-columns: 1fr 1fr;
+      gap: 1px; background: var(--border);
+    }
+    .state-info-kpi > div { background: var(--surface2); padding: 14px 18px; }
+    .state-kpi-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .7px; color: var(--muted); }
+    .state-kpi-val { font-size: 26px; font-weight: 900; letter-spacing: -1px; margin-top: 2px; }
+    .state-co-list { padding: 16px 20px; max-height: 340px; overflow-y: auto; }
+    .state-co-item {
+      display: flex; align-items: center; gap: 10px;
+      padding: 8px 0; border-bottom: 1px solid var(--border); font-size: 13px;
+    }
+    .state-co-item:last-child { border-bottom: none; }
+    .state-co-num {
+      width: 22px; height: 22px; border-radius: 50%;
+      background: var(--blue-lt); color: var(--accent);
+      display: flex; align-items: center; justify-content: center;
+      font-size: 10px; font-weight: 800; flex-shrink: 0;
+    }
+    .state-co-name { flex: 1; font-weight: 500; }
+    .state-co-count { font-size: 12px; font-weight: 700; color: var(--accent); }
+    .state-empty {
+      padding: 32px 20px; text-align: center;
+      color: var(--muted); font-size: 13px;
+    }
+    .map-hint {
+      padding: 10px 20px 14px;
+      font-size: 11.5px; color: var(--muted);
+      border-top: 1px solid var(--border);
+      display: flex; align-items: center; gap: 6px;
+    }
+
+    /* ── MODAL ── */
+    .modal-overlay {
+      position: fixed; inset: 0; background: rgba(0,0,0,.5);
+      z-index: 1000; display: flex; align-items: center; justify-content: center;
+      opacity: 0; pointer-events: none; transition: opacity .2s;
+    }
+    .modal-overlay.open { opacity: 1; pointer-events: all; }
+    .modal {
+      background: var(--surface); border-radius: var(--radius);
+      width: 500px; max-width: 95vw; max-height: 80vh;
+      box-shadow: 0 20px 60px rgba(0,0,0,.3);
+      overflow: hidden; display: flex; flex-direction: column;
+      transform: translateY(20px) scale(.97);
+      transition: transform .2s;
+    }
+    .modal-overlay.open .modal { transform: translateY(0) scale(1); }
+    .modal-head {
+      padding: 18px 22px; border-bottom: 1px solid var(--border);
+      display: flex; align-items: center; justify-content: space-between;
+      background: var(--surface2);
+    }
+    .modal-title { font-size: 16px; font-weight: 800; }
+    .modal-close {
+      width: 28px; height: 28px; border-radius: 50%; border: 1px solid var(--border);
+      background: var(--surface); cursor: pointer; font-size: 16px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center; color: var(--muted);
+      transition: background .15s, color .15s;
+    }
+    .modal-close:hover { background: var(--red-lt); color: var(--red); }
+    .modal-body { padding: 20px 22px; overflow-y: auto; }
+    .modal-stat-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 12px; margin-bottom: 18px; }
+    .modal-stat { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px 14px; }
+    .modal-stat-label { font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: .6px; color: var(--muted); }
+    .modal-stat-val { font-size: 22px; font-weight: 900; letter-spacing: -.8px; margin-top: 2px; }
+    .modal-divider { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .8px; color: var(--muted); margin-bottom: 10px; }
+
+    /* ── FOOTER ── */
+    footer {
+      text-align: center; padding: 18px; font-size: 11px;
+      color: #94a3b8; border-top: 1px solid var(--border); margin-top: 48px;
+    }
+
+    /* ── RESPONSIVE ── */
+    @media (max-width: 960px) {
+      .kpi-grid { grid-template-columns: repeat(2, 1fr); }
+      .row-2, .row-3 { grid-template-columns: 1fr; }
+      .map-layout { grid-template-columns: 1fr; }
+      .filter-bar { padding: 10px 16px; flex-wrap: wrap; }
+    }
+    @media (max-width: 600px) {
+      .kpi-grid { grid-template-columns: 1fr 1fr; }
+      .page { padding: 20px 16px 48px; }
+      header nav a { display: none; }
+      header nav a.active { display: inline-flex; }
+      .donut-wrap { flex-direction: column; }
+      .prog-grid { grid-template-columns: 1fr; }
+      .modal-stat-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- NAV -->
+<header>
+  <div class="brand">WBL <span>Hub</span></div>
+  <nav>
+    <a href="index.html">Home</a>
+    <a href="wbl-sesi2-2526.html">Sesi 2 2025/26</a>
+    <a href="wbl-sesi1.html">Sesi 1 2026/27</a>
+    <a href="wbl.html" class="active">Sesi 2 2026/27</a>
+    <a href="wbl-isu.html">Isu Pelajar <span class="nav-badge">34</span></a>
+  </nav>
+  <div class="header-right">
+    <button class="dm-toggle" id="dmToggle">🌙 Dark</button>
+    <div class="avatar">WBL</div>
+  </div>
+</header>
+
+<!-- BREADCRUMB -->
+<div class="breadcrumb">
+  <a href="index.html">🏠 Home</a>
+  <span class="sep">›</span>
+  <a href="wbl.html">WBL</a>
+  <span class="sep">›</span>
+  <span class="current">Sesi 2 2026/2027</span>
+  <span style="margin-left:auto;font-size:11px;color:var(--muted)" id="bcInfo">124 pelajar · 5 kelas</span>
+</div>
+
+<!-- FILTER BAR -->
+<div class="filter-bar">
+  <span class="filter-label">TAPIS:</span>
+  <button class="filter-btn active" data-filter="all">Semua Program</button>
+  <button class="filter-btn" data-filter="dcs">DCS</button>
+  <button class="filter-btn" data-filter="dcv">DCV</button>
+  <div class="filter-sep"></div>
+  <span style="font-size:12px;color:var(--muted);">Menunjukkan: <strong id="filterInfo">124 pelajar · 5 kelas</strong></span>
+  <div class="filter-right">
+    <button class="btn-export" id="btnExportCSV">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Export CSV
+    </button>
+    <button class="btn-export" id="btnExportPDF">
+      <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Print / PDF
+    </button>
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- Heading -->
+  <div class="page-head">
+    <div>
+      <h1>Statistik Pelajar WBL</h1>
+      <p>Work-Based Learning · Sesi 2 2026/2027 · Program DCV &amp; DCS</p>
+    </div>
+    <div class="badge">
+      <span class="badge-dot"></span>
+      Data terkini · <span id="lastUpdated"></span>
+    </div>
+  </div>
+
+  <!-- KPI Cards -->
+  <div class="section-label">Ringkasan Keseluruhan</div>
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="kpi-label">Jumlah Pelajar</div>
+      <div class="kpi-val blue" data-count-to="124" id="kpi-total">0</div>
+      <div class="kpi-sub" id="kpi-total-sub">DCV + DCS (semua kelas)</div>
+      <div class="kpi-pill blue">↑ 5 kelas aktif</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-label">Sudah Dapat Tempat</div>
+      <div class="kpi-val green" data-count-to="73" id="kpi-placed">0</div>
+      <div class="kpi-sub" id="kpi-placed-sub">Telah disahkan penempatan</div>
+      <div class="kpi-pill green" id="kpi-placed-pct">✓ 58.9% kadar penempatan</div>
+    </div>
+    <div class="kpi amber">
+      <div class="kpi-label">Belum Dapat Tempat</div>
+      <div class="kpi-val amber" data-count-to="51" id="kpi-notyet">0</div>
+      <div class="kpi-sub" id="kpi-notyet-sub">Masih mencari syarikat</div>
+      <div class="kpi-pill amber" id="kpi-notyet-pct">⚠ 41.1% perlu tindakan</div>
+    </div>
+    <div class="kpi purple">
+      <div class="kpi-label">Syarikat Terlibat</div>
+      <div class="kpi-val purple" data-count-to="43" id="kpi-co">0</div>
+      <div class="kpi-sub">Syarikat menerima pelajar</div>
+      <div class="kpi-pill purple">↑ Pelbagai sektor</div>
+    </div>
+  </div>
+
+  <!-- Section 1: Placement by Program -->
+  <div class="section-label">1 · Status Penempatan Ikut Program</div>
+  <div class="row-2">
+
+    <!-- Donut Chart: Overall -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Keseluruhan Penempatan</div>
+          <div class="panel-sub">Status dapat / belum dapat tempat — semua program</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="donut-wrap">
+          <div class="donut-chart-container">
+            <canvas id="overallDonut"></canvas>
+            <div class="donut-center">
+              <div class="donut-center-val" style="color:var(--green)" id="donutCenterVal">59%</div>
+              <div class="donut-center-lbl">Ditempatkan</div>
+            </div>
+          </div>
+          <div class="legend">
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#16a34a"></div>
+              <div class="legend-name">Sudah Dapat Tempat</div>
+              <div>
+                <span class="legend-val" id="legendPlaced">73</span>
+                <span class="legend-pct" id="legendPlacedPct">(58.9%)</span>
+              </div>
+            </div>
+            <div class="legend-item">
+              <div class="legend-dot" style="background:#d97706"></div>
+              <div class="legend-name">Belum Dapat Tempat</div>
+              <div>
+                <span class="legend-val" id="legendNotyet">51</span>
+                <span class="legend-pct" id="legendNotyetPct">(41.1%)</span>
+              </div>
+            </div>
+            <div style="margin-top:4px; padding-top:12px; border-top:1px solid var(--border);">
+              <div style="font-size:12px;color:var(--muted);">Jumlah Keseluruhan</div>
+              <div style="font-size:20px;font-weight:900;letter-spacing:-1px;" id="legendTotal">124 pelajar</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Program Comparison -->
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Perbandingan DCV vs DCS</div>
+          <div class="panel-sub">Status penempatan ikut program</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="prog-grid" id="progGrid">
+          <!-- DCS -->
+          <div class="prog-card dcs" id="progCardDCS">
+            <div class="prog-name dcs">Program DCS</div>
+            <div class="prog-total" id="progTotalDCS">70</div>
+            <div class="prog-sub" id="progSubDCS">DCS3A (34) + DCS3B (35) + DCS3C (1)</div>
+            <div class="prog-bar-row">
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Dapat Tempat</span>
+                  <span class="prog-bar-val" style="color:var(--green)" id="dcsPlacedLbl">48 (68.6%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" id="dcsPlacedBar" style="background:var(--green)"></div></div>
+              </div>
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Belum Dapat</span>
+                  <span class="prog-bar-val" style="color:var(--amber)" id="dcsNotyetLbl">22 (31.4%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" id="dcsNotyetBar" style="background:var(--amber)"></div></div>
+              </div>
+            </div>
+          </div>
+          <!-- DCV -->
+          <div class="prog-card dcv" id="progCardDCV">
+            <div class="prog-name dcv">Program DCV</div>
+            <div class="prog-total" id="progTotalDCV">54</div>
+            <div class="prog-sub" id="progSubDCV">DCV3A (24) + DCV3B (30)</div>
+            <div class="prog-bar-row">
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Dapat Tempat</span>
+                  <span class="prog-bar-val" style="color:var(--green)" id="dcvPlacedLbl">25 (46.3%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" id="dcvPlacedBar" style="background:var(--green)"></div></div>
+              </div>
+              <div>
+                <div class="prog-bar-meta">
+                  <span class="prog-bar-name">Belum Dapat</span>
+                  <span class="prog-bar-val" style="color:var(--amber)" id="dcvNotyetLbl">29 (53.7%)</span>
+                </div>
+                <div class="prog-track"><div class="prog-fill" id="dcvNotyetBar" style="background:var(--amber)"></div></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Bar chart comparison -->
+        <div style="margin-top:20px;">
+          <div class="chart-container h240">
+            <canvas id="programBar"></canvas>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /row-2 -->
+
+  <!-- Section 2: Map -->
+  <div class="section-label">2 · Peta Taburan Pelajar WBL — Malaysia</div>
+  <div class="map-section">
+    <div class="map-layout">
+
+      <!-- SVG Map -->
+      <div class="map-wrap">
+        <div class="panel-head">
+          <div>
+            <div class="panel-title">Peta Interaktif Taburan Negeri</div>
+            <div class="panel-sub">Klik negeri untuk lihat senarai syarikat</div>
+          </div>
+          <div style="font-size:11.5px;color:var(--muted);display:flex;align-items:center;gap:6px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:var(--green);display:inline-block"></span> Ada pelajar
+            &nbsp;
+            <span style="width:8px;height:8px;border-radius:50%;background:#e2e8f0;display:inline-block"></span> Tiada pelajar
+          </div>
+        </div>
+        <div class="map-svg-container">
+          <svg id="myMap" viewBox="0 0 820 480" xmlns="http://www.w3.org/2000/svg">
+            <!-- Semenanjung Malaysia -->
+            <path class="state-path" data-state="Perlis" d="M188,42 L198,38 L208,42 L212,54 L204,60 L192,58 L184,50 Z"/>
+            <path class="state-path" data-state="Kedah" d="M178,52 L188,42 L212,54 L218,68 L224,82 L218,94 L208,102 L196,106 L184,100 L174,88 L168,74 L172,62 Z"/>
+            <path class="state-path" data-state="Pulau Pinang" d="M168,74 L178,70 L186,78 L182,90 L172,94 L164,86 Z"/>
+            <path class="state-path" data-state="Pulau Pinang" d="M148,80 L162,76 L166,84 L158,90 L146,88 Z"/>
+            <path class="state-path" data-state="Perak" d="M196,106 L208,102 L224,108 L238,118 L246,132 L248,148 L242,162 L232,172 L220,176 L208,170 L198,160 L190,148 L184,134 L182,118 Z"/>
+            <path class="state-path" data-state="Selangor" d="M220,176 L232,172 L244,180 L252,194 L250,210 L240,218 L228,216 L216,208 L210,196 L212,182 Z"/>
+            <path class="state-path" data-state="Kuala Lumpur" d="M228,194 L236,190 L242,196 L238,204 L230,206 L224,200 Z"/>
+            <path class="state-path" data-state="W.P. Putrajaya" d="M236,208 L244,206 L248,214 L242,220 L234,218 Z"/>
+            <path class="state-path" data-state="Negeri Sembilan" d="M240,218 L252,210 L264,214 L270,226 L268,240 L256,248 L244,244 L236,234 L234,220 Z"/>
+            <path class="state-path" data-state="Melaka" d="M256,248 L268,240 L278,244 L280,256 L270,264 L258,262 L252,254 Z"/>
+            <path class="state-path" data-state="Johor" d="M270,226 L290,218 L312,222 L328,234 L334,250 L330,268 L318,278 L300,282 L282,278 L268,268 L260,254 L258,240 Z"/>
+            <path class="state-path" data-state="Pahang" d="M246,132 L260,128 L276,132 L294,140 L306,156 L312,172 L310,190 L298,200 L284,204 L270,200 L256,192 L248,178 L244,162 Z"/>
+            <path class="state-path" data-state="Terengganu" d="M294,140 L310,136 L328,142 L340,158 L342,176 L334,192 L320,198 L308,192 L298,176 L296,160 Z"/>
+            <path class="state-path" data-state="Kelantan" d="M224,82 L242,78 L260,82 L276,92 L284,108 L278,122 L266,130 L250,132 L236,126 L224,114 L218,100 Z"/>
+            <!-- East Malaysia -->
+            <path class="state-path" data-state="Sarawak" d="M456,180 L490,160 L530,148 L572,144 L610,148 L638,158 L658,174 L666,196 L660,220 L644,238 L622,252 L598,260 L572,266 L548,268 L524,264 L502,256 L482,244 L466,228 L454,210 Z"/>
+            <path class="state-path" data-state="Sabah" d="M648,110 L682,98 L716,96 L744,106 L762,124 L764,148 L752,168 L730,180 L706,184 L682,180 L660,168 L646,150 L642,130 Z"/>
+            <path class="state-path" data-state="Labuan" d="M626,168 L636,164 L640,174 L632,180 L624,176 Z"/>
+          </svg>
+        </div>
+        <div class="map-legend">
+          <span class="map-legend-label">Rendah</span>
+          <div class="map-legend-grad"></div>
+          <span class="map-legend-label">Tinggi</span>
+          <span style="margin-left:8px;font-size:11px;">● = bilangan pelajar</span>
+        </div>
+      </div>
+
+      <!-- State Info Panel -->
+      <div class="state-info-panel" id="stateInfoPanel">
+        <div class="state-info-head">
+          <div class="state-info-name" id="stateInfoName">← Klik Negeri</div>
+          <div class="state-info-sub" id="stateInfoSub">Pilih negeri pada peta untuk lihat butiran</div>
+        </div>
+        <div class="state-info-kpi" id="stateInfoKpi" style="display:none;">
+          <div>
+            <div class="state-kpi-label">Jumlah Pelajar</div>
+            <div class="state-kpi-val" id="stateKpiPelajar" style="color:var(--accent)">—</div>
+          </div>
+          <div>
+            <div class="state-kpi-label">Syarikat Terlibat</div>
+            <div class="state-kpi-val" id="stateKpiSyarikat" style="color:var(--purple)">—</div>
+          </div>
+        </div>
+        <div id="stateCoContent">
+          <div class="state-empty">
+            <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/></svg>
+            <div style="margin-top:8px;">Tiada negeri dipilih</div>
+            <div style="font-size:11px;margin-top:4px;">Klik mana-mana negeri pada peta</div>
+          </div>
+        </div>
+        <div class="map-hint">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 1 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg>
+          Klik negeri pada peta untuk lihat syarikat
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /map-section -->
+
+  <!-- Section 3: By State Chart -->
+  <div class="section-label">3 · Statistik Mengikut Negeri</div>
+  <div class="row-3">
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Jumlah Pelajar Mengikut Negeri</div>
+          <div class="panel-sub">Semua program WBL</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container h320">
+          <canvas id="stateBar"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Senarai Negeri</div>
+          <div class="panel-sub">Bilangan pelajar per negeri</div>
+        </div>
+      </div>
+      <div class="panel-body" style="padding-top:16px;">
+        <div class="state-list" id="stateList"></div>
+      </div>
+    </div>
+
+  </div><!-- /row-3 -->
+
+  <!-- Section 4: By Company -->
+  <div class="section-label">4 · Statistik Mengikut Syarikat</div>
+
+  <div class="row-full">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Jumlah Pelajar Mengikut Syarikat</div>
+          <div class="panel-sub">Syarikat yang menerima pelajar WBL — Top 15</div>
+        </div>
+      </div>
+      <div class="panel-body">
+        <div class="chart-container h360">
+          <canvas id="companyBar"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="row-full">
+    <div class="panel">
+      <div class="panel-head">
+        <div>
+          <div class="panel-title">Jadual Penempatan Syarikat</div>
+          <div class="panel-sub">Klik baris syarikat untuk lihat butiran · Klik header kolum untuk susun</div>
+        </div>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:12px;color:var(--muted);">Jumlah: <strong id="coTableCount">43 syarikat</strong></span>
+        </div>
+      </div>
+      <!-- Search bar -->
+      <div class="search-wrap">
+        <div class="search-box">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          <input type="text" id="coSearch" placeholder="Cari nama syarikat…" />
+        </div>
+        <span class="search-count" id="coSearchCount"></span>
+      </div>
+      <div style="overflow-x:auto;">
+        <table class="co-table" id="companyTable">
+          <thead>
+            <tr>
+              <th style="width:48px" data-col="rank">#</th>
+              <th data-col="name">Nama Syarikat</th>
+              <th data-col="bar">Pelajar</th>
+              <th data-col="count" class="sort-desc">Bilangan ↓</th>
+            </tr>
+          </thead>
+          <tbody id="companyTableBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /page -->
+
+<!-- Map tooltip -->
+<div class="map-tooltip" id="mapTooltip">
+  <div class="map-tooltip-name" id="ttName"></div>
+  <div class="map-tooltip-row"><span>Pelajar</span><span class="map-tooltip-val" id="ttCount"></span></div>
+  <div class="map-tooltip-row"><span>Syarikat</span><span class="map-tooltip-val" id="ttCo"></span></div>
+</div>
+
+<!-- Company detail modal -->
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal">
+    <div class="modal-head">
+      <div class="modal-title" id="modalTitle">Butiran Syarikat</div>
+      <button class="modal-close" id="modalClose">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-stat-grid" id="modalStats"></div>
+      <div class="modal-divider">Maklumat Penempatan</div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+</div>
+
+<footer id="pageFooter">TVET Hub &nbsp;·&nbsp; Dashboard WBL Pelajar &nbsp;·&nbsp; Data dikemaskini: <span id="footerDate"></span></footer>
+
+<script>
+// ════════════════════════════════════════════════════════
+// DATA
+// ════════════════════════════════════════════════════════
+// DCS: DCS3A(34) + DCS3B(35) + DCS3C(1) = 70 | placed 48 | belum 22
+// DCV: DCV3A(24) + DCV3B(30) = 54           | placed 25 | belum 29
+// JUMLAH: 124 pelajar | placed 73 | belum 51
+
+const PROGRAMS = {
+  all: { total: 124, placed: 73, notyet: 51, label: 'Semua', companies: 43, classes: '5 kelas' },
+  dcs: { total: 70,  placed: 48, notyet: 22, label: 'DCS',   companies: 28, classes: 'DCS3A+B+C' },
+  dcv: { total: 54,  placed: 25, notyet: 29, label: 'DCV',   companies: 20, classes: 'DCV3A+B'   },
+};
+
+const STATES = [
+  { name: "Kedah",           count: 28 },
+  { name: "Selangor",        count: 23 },
+  { name: "Pulau Pinang",    count: 11 },
+  { name: "Perak",           count: 10 },
+  { name: "Perlis",          count: 5  },
+  { name: "Johor",           count: 4  },
+  { name: "Melaka",          count: 3  },
+  { name: "Negeri Sembilan", count: 2  },
+  { name: "Kelantan",        count: 2  },
+  { name: "Pahang",          count: 2  },
+  { name: "W.P. Putrajaya",  count: 2  },
+  { name: "Sabah",           count: 2  },
+  { name: "Terengganu",      count: 1  },
+  { name: "Kuala Lumpur",    count: 1  },
+];
+
+const COMPANIES = [
+  { name: "Darn Lukis Sdn Bhd",                               count: 5, program: 'dcs', negeri: 'Kedah'         },
+  { name: "ID Prosound Event Management Sdn Bhd",             count: 5, program: 'dcv', negeri: 'Kedah'         },
+  { name: "Santai Mesra Sdn.Bhd.",                            count: 4, program: 'dcs', negeri: 'Kedah'         },
+  { name: "Teo Jason",                                        count: 4, program: 'dcv', negeri: 'Kelantan'      },
+  { name: "Pusat Pengajian Industri Kreatif & Seni",          count: 4, program: 'dcs', negeri: 'Pulau Pinang'  },
+  { name: "Jabatan Pendidikan Negeri Perlis",                  count: 3, program: 'dcs', negeri: 'Perlis'        },
+  { name: "Reino Creative Group Sdn.Bhd",                     count: 3, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Cinemalaya Studios Sdn.Bhd",                       count: 3, program: 'dcs', negeri: 'Perak'         },
+  { name: "D'Ayu Pictures Sdn.Bhd",                           count: 3, program: 'dcv', negeri: 'Johor'         },
+  { name: "Mey Golden Printing",                               count: 2, program: 'dcs', negeri: 'Perak'         },
+  { name: "Muna Managemen Service & Enterprise",              count: 2, program: 'dcs', negeri: 'Melaka'        },
+  { name: "Pekanmaya Sdn.Bhd",                                count: 2, program: 'dcv', negeri: 'Pulau Pinang'  },
+  { name: "Made In Ipoh",                                     count: 2, program: 'dcs', negeri: 'Perak'         },
+  { name: "Wegrow Edutainment (M) Sdn.Bhd",                  count: 2, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Farm Fresh Milk Sdn.Bhd",                          count: 2, program: 'dcs', negeri: 'Selangor'      },
+  { name: "Raxbit Smart Solutions",                           count: 2, program: 'dcs', negeri: 'Kedah'         },
+  { name: "Cogear Productions / CGO Holdings",                count: 2, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Kolej Universiti Inovatif",                        count: 2, program: 'dcs', negeri: 'Perak'         },
+  { name: "Dcine Group",                                      count: 2, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Clarivo Tech Sdn. Bhd",                            count: 1, program: 'dcs', negeri: 'Selangor'      },
+  { name: "Penerbit USM",                                     count: 1, program: 'dcs', negeri: 'Pulau Pinang'  },
+  { name: "Dewa Group Venture",                               count: 1, program: 'dcv', negeri: 'Kedah'         },
+  { name: "Crescentech IT Solutions & Services",              count: 1, program: 'dcs', negeri: 'Selangor'      },
+  { name: "Multizone Printing",                               count: 1, program: 'dcs', negeri: 'Perak'         },
+  { name: "Print Expert Sdn.Bhd.",                            count: 1, program: 'dcs', negeri: 'Selangor'      },
+  { name: "Kaycee Empire",                                    count: 1, program: 'dcv', negeri: 'Kedah'         },
+  { name: "Mega RBG",                                         count: 1, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Tongkang Art Empire",                              count: 1, program: 'dcv', negeri: 'Pulau Pinang'  },
+  { name: "MMP Infinities Resources",                         count: 1, program: 'dcs', negeri: 'Selangor'      },
+  { name: "Trifecta Collective Sdn Bhd",                      count: 1, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Khalifah Media Network (M) Sdn.Bhd",              count: 1, program: 'dcv', negeri: 'Selangor'      },
+  { name: "Nilam Bestari Design N Print",                     count: 1, program: 'dcs', negeri: 'Melaka'        },
+  { name: "MIG Pictures Sdn Bhd",                             count: 1, program: 'dcv', negeri: 'Pulau Pinang'  },
+  { name: "Media Creative Centre",                            count: 1, program: 'dcv', negeri: 'Kuala Lumpur'  },
+  { name: "Jabatan Muzium Negeri Sabah",                      count: 1, program: 'dcs', negeri: 'Sabah'         },
+  { name: "Pejabat Pendidikan Daerah Kuala Muda",             count: 1, program: 'dcs', negeri: 'Kedah'         },
+  { name: "Jabatan Penyiaran Negeri Pahang",                  count: 1, program: 'dcv', negeri: 'Pahang'        },
+  { name: "Parkroyal Langkawi Resort",                        count: 1, program: 'dcv', negeri: 'Kedah'         },
+  { name: "Live Blitz Sdn.Bhd.",                              count: 1, program: 'dcv', negeri: 'Kedah'         },
+  { name: "Center of Excellence for Renewable Energy",        count: 1, program: 'dcs', negeri: 'Selangor'      },
+  { name: "KK Line One Sdn. Bhd.",                            count: 1, program: 'dcs', negeri: 'Pahang'        },
+  { name: "Zip Borneo Sdn.Bhd",                               count: 1, program: 'dcv', negeri: 'Sabah'         },
+  { name: "Kedai Banner & Iklan",                             count: 1, program: 'dcs', negeri: 'Kedah'         },
+];
+
+const STATE_COMPANIES = {
+  "Kedah":           COMPANIES.filter(c => c.negeri === 'Kedah'),
+  "Selangor":        COMPANIES.filter(c => c.negeri === 'Selangor'),
+  "Pulau Pinang":    COMPANIES.filter(c => c.negeri === 'Pulau Pinang'),
+  "Perak":           COMPANIES.filter(c => c.negeri === 'Perak'),
+  "Perlis":          COMPANIES.filter(c => c.negeri === 'Perlis'),
+  "Johor":           COMPANIES.filter(c => c.negeri === 'Johor'),
+  "Melaka":          COMPANIES.filter(c => c.negeri === 'Melaka'),
+  "Negeri Sembilan": COMPANIES.filter(c => c.negeri === 'Negeri Sembilan'),
+  "Kelantan":        COMPANIES.filter(c => c.negeri === 'Kelantan'),
+  "Pahang":          COMPANIES.filter(c => c.negeri === 'Pahang'),
+  "W.P. Putrajaya":  COMPANIES.filter(c => c.negeri === 'W.P. Putrajaya'),
+  "Sabah":           COMPANIES.filter(c => c.negeri === 'Sabah'),
+  "Terengganu":      COMPANIES.filter(c => c.negeri === 'Terengganu'),
+  "Kuala Lumpur":    COMPANIES.filter(c => c.negeri === 'Kuala Lumpur'),
+};
+
+// Build state-count lookup
+const STATE_MAP = {};
+STATES.forEach(s => { STATE_MAP[s.name] = s.count; });
+
+// ════════════════════════════════════════════════════════
+// TIMESTAMP
+// ════════════════════════════════════════════════════════
+const now = new Date();
+const tsStr = now.toLocaleDateString('ms-MY', { day:'numeric', month:'long', year:'numeric' });
+document.getElementById('lastUpdated').textContent = tsStr;
+document.getElementById('footerDate').textContent  = tsStr;
+
+// ════════════════════════════════════════════════════════
+// DARK MODE
+// ════════════════════════════════════════════════════════
+const dmBtn = document.getElementById('dmToggle');
+const html  = document.documentElement;
+
+function applyTheme(dark) {
+  html.setAttribute('data-theme', dark ? 'dark' : 'light');
+  dmBtn.textContent = dark ? '☀️ Light' : '🌙 Dark';
+  localStorage.setItem('wbl-theme', dark ? 'dark' : 'light');
+}
+applyTheme(localStorage.getItem('wbl-theme') === 'dark');
+dmBtn.addEventListener('click', () => applyTheme(html.getAttribute('data-theme') === 'light'));
+
+// ════════════════════════════════════════════════════════
+// COUNT-UP ANIMATION
+// ════════════════════════════════════════════════════════
+function countUp(el, target, duration = 1000) {
+  const start = performance.now();
+  function frame(ts) {
+    const pct = Math.min((ts - start) / duration, 1);
+    const ease = 1 - Math.pow(1 - pct, 3);
+    el.textContent = Math.round(ease * target);
+    if (pct < 1) requestAnimationFrame(frame);
+  }
+  requestAnimationFrame(frame);
+}
+
+// ════════════════════════════════════════════════════════
+// CHART DEFAULTS
+// ════════════════════════════════════════════════════════
+Chart.defaults.font.family = '-apple-system, "Segoe UI", system-ui, sans-serif';
+Chart.defaults.color       = '#64748b';
+
+const coColorArr = [
+  '#2563eb','#3b82f6','#7c3aed','#8b5cf6','#0d9488',
+  '#14b8a6','#d97706','#f59e0b','#dc2626','#ef4444',
+  '#16a34a','#22c55e','#0891b2','#06b6d4','#6366f1'
+];
+
+// ════════════════════════════════════════════════════════
+// FILTER STATE
+// ════════════════════════════════════════════════════════
+let activeFilter = 'all';
+
+// ── 1. OVERALL DONUT ──────────────────────────────────────
+const donutChart = new Chart(document.getElementById('overallDonut'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Sudah Dapat Tempat', 'Belum Dapat Tempat'],
+    datasets: [{
+      data: [73, 51],
+      backgroundColor: ['#16a34a', '#d97706'],
+      borderWidth: 3,
+      borderColor: '#ffffff',
+      hoverBorderWidth: 3,
+    }]
+  },
+  options: {
+    cutout: '72%',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.label}: ${ctx.raw} pelajar (${((ctx.raw / (ctx.raw + (ctx.raw === donutChart.data.datasets[0].data[0] ? donutChart.data.datasets[0].data[1] : donutChart.data.datasets[0].data[0])) * 100)).toFixed(1)}%)`
+        }
+      }
+    }
+  }
+});
+
+// ── 2. PROGRAM BAR ────────────────────────────────────────
+const programBarChart = new Chart(document.getElementById('programBar'), {
+  type: 'bar',
+  data: {
+    labels: ['DCS (70 pelajar)', 'DCV (54 pelajar)'],
+    datasets: [
+      {
+        label: 'Sudah Dapat Tempat',
+        data: [48, 25],
+        backgroundColor: '#16a34a',
+        borderRadius: 6,
+        borderSkipped: false,
+      },
+      {
+        label: 'Belum Dapat Tempat',
+        data: [22, 29],
+        backgroundColor: '#fde68a',
+        borderRadius: 6,
+        borderSkipped: false,
+      }
+    ]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'top',
+        labels: { boxWidth: 10, boxHeight: 10, borderRadius: 5, useBorderRadius: true, padding: 16, font: { size: 12 } }
+      },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.dataset.label}: ${ctx.raw} pelajar`
+        }
+      }
+    },
+    scales: {
+      x: {
+        stacked: true,
+        grid: { color: '#f1f5f9' },
+        border: { dash: [4,4] },
+        ticks: { font: { size: 11 } }
+      },
+      y: {
+        stacked: true,
+        grid: { display: false },
+        ticks: { font: { size: 12 } }
+      }
+    }
+  }
+});
+
+// ── 3. STATE BAR ─────────────────────────────────────────
+const maxState = Math.max(...STATES.map(s => s.count));
+const stateColors = STATES.map(s => {
+  const opacity = 0.35 + (s.count / maxState) * 0.65;
+  return `rgba(37, 99, 235, ${opacity})`;
+});
+
+const stateBarChart = new Chart(document.getElementById('stateBar'), {
+  type: 'bar',
+  data: {
+    labels: STATES.map(s => s.name),
+    datasets: [{
+      label: 'Jumlah Pelajar',
+      data: STATES.map(s => s.count),
+      backgroundColor: stateColors,
+      borderRadius: 6,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: ctx => ` ${ctx.raw} pelajar`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: '#f1f5f9' },
+        border: { dash: [4,4] },
+        ticks: { font: { size: 11 } }
+      },
+      y: {
+        grid: { display: false },
+        ticks: { font: { size: 12 } }
+      }
+    }
+  }
+});
+
+// ── 4. COMPANY BAR (Top 15) ───────────────────────────────
+const top15 = COMPANIES.slice(0, 15);
+
+const companyBarChart = new Chart(document.getElementById('companyBar'), {
+  type: 'bar',
+  data: {
+    labels: top15.map(c => c.name.length > 32 ? c.name.substring(0, 30) + '…' : c.name),
+    datasets: [{
+      label: 'Pelajar',
+      data: top15.map(c => c.count),
+      backgroundColor: coColorArr,
+      borderRadius: 7,
+      borderSkipped: false,
+    }]
+  },
+  options: {
+    indexAxis: 'y',
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          title: ctx => COMPANIES[ctx[0].dataIndex].name,
+          label: ctx => ` ${ctx.raw} pelajar ditempatkan`
+        }
+      }
+    },
+    scales: {
+      x: {
+        grid: { color: '#f1f5f9' },
+        border: { dash: [4,4] },
+        ticks: { stepSize: 1, font: { size: 11 } }
+      },
+      y: {
+        grid: { display: false },
+        ticks: { font: { size: 11.5 } }
+      }
+    }
+  }
+});
+
+// ── STATE LIST ────────────────────────────────────────────
+const stateListEl = document.getElementById('stateList');
+STATES.forEach(s => {
+  const pct = (s.count / maxState * 100).toFixed(0);
+  stateListEl.innerHTML += `
+    <div class="state-row">
+      <div class="state-name">${s.name}</div>
+      <div class="state-bar-wrap">
+        <div class="state-bar-fill" data-width="${pct}"></div>
+      </div>
+      <div class="state-count">${s.count}</div>
+    </div>`;
+});
+
+// ════════════════════════════════════════════════════════
+// COUNT-UP + ANIMATED BARS (trigger on load)
+// ════════════════════════════════════════════════════════
+function runAnimations(prog) {
+  const d = PROGRAMS[prog];
+  countUp(document.getElementById('kpi-total'),  d.total,    900);
+  countUp(document.getElementById('kpi-placed'), d.placed,   900);
+  countUp(document.getElementById('kpi-notyet'), d.notyet,   900);
+  countUp(document.getElementById('kpi-co'),     d.companies,900);
+
+  const pct = ((d.placed / d.total) * 100).toFixed(1);
+  setTimeout(() => {
+    document.getElementById('kpi-placed-pct').textContent  = `✓ ${pct}% kadar penempatan`;
+    document.getElementById('kpi-notyet-pct').textContent  = `⚠ ${(100 - +pct).toFixed(1)}% perlu tindakan`;
+    document.getElementById('filterInfo').textContent      = `${d.total} pelajar · ${d.classes}`;
+
+    // Alert badge if below 60%
+    const placedCard = document.querySelector('.kpi.green');
+    const existing   = placedCard.querySelector('.alert-badge');
+    if (+pct < 60) {
+      if (!existing) {
+        const ab = document.createElement('div');
+        ab.className = 'alert-badge';
+        ab.textContent = `⚠ Di bawah 60% sasaran!`;
+        placedCard.appendChild(ab);
+      }
+    } else {
+      if (existing) existing.remove();
+    }
+  }, 300);
+
+  // Animate prog bars
+  setTimeout(() => {
+    const dcsPct = prog === 'dcv' ? 0 : (prog === 'dcs' ? (48/70*100) : (48/70*100));
+    const dcvPct = prog === 'dcs' ? 0 : (prog === 'dcv' ? (25/54*100) : (25/54*100));
+    document.getElementById('dcsPlacedBar').style.width = dcsPct.toFixed(1) + '%';
+    document.getElementById('dcsNotyetBar').style.width = (100 - dcsPct).toFixed(1) + '%';
+    document.getElementById('dcvPlacedBar').style.width = dcvPct.toFixed(1) + '%';
+    document.getElementById('dcvNotyetBar').style.width = (100 - dcvPct).toFixed(1) + '%';
+
+    // Animate state bars
+    document.querySelectorAll('.state-bar-fill').forEach(el => {
+      el.style.width = el.getAttribute('data-width') + '%';
+    });
+  }, 200);
+}
+
+runAnimations('all');
+
+// ════════════════════════════════════════════════════════
+// GLOBAL FILTER
+// ════════════════════════════════════════════════════════
+document.querySelectorAll('.filter-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    activeFilter = btn.getAttribute('data-filter');
+    runAnimations(activeFilter);
+    renderCompanyTable();
+
+    // Update donut + program bar
+    const d = PROGRAMS[activeFilter];
+    donutChart.data.datasets[0].data = [d.placed, d.notyet];
+    donutChart.update();
+    document.getElementById('donutCenterVal').textContent  = Math.round(d.placed / d.total * 100) + '%';
+    document.getElementById('legendPlaced').textContent   = d.placed;
+    document.getElementById('legendNotyet').textContent   = d.notyet;
+    document.getElementById('legendPlacedPct').textContent = `(${(d.placed/d.total*100).toFixed(1)}%)`;
+    document.getElementById('legendNotyetPct').textContent = `(${(d.notyet/d.total*100).toFixed(1)}%)`;
+    document.getElementById('legendTotal').textContent    = `${d.total} pelajar`;
+
+    // Show/hide program cards
+    const showDCS = activeFilter !== 'dcv';
+    const showDCV = activeFilter !== 'dcs';
+    document.getElementById('progCardDCS').style.display = showDCS ? '' : 'none';
+    document.getElementById('progCardDCV').style.display = showDCV ? '' : 'none';
+  });
+});
+
+// ════════════════════════════════════════════════════════
+// COMPANY TABLE (with search + sort + filter)
+// ════════════════════════════════════════════════════════
+let sortCol = 'count';
+let sortDir = 'desc';
+
+function renderCompanyTable() {
+  let data = COMPANIES.filter(c => activeFilter === 'all' || c.program === activeFilter);
+
+  const q = document.getElementById('coSearch').value.trim().toLowerCase();
+  if (q) data = data.filter(c => c.name.toLowerCase().includes(q));
+
+  data = [...data].sort((a, b) => {
+    let av = sortCol === 'name' ? a.name.toLowerCase() : a.count;
+    let bv = sortCol === 'name' ? b.name.toLowerCase() : b.count;
+    if (av < bv) return sortDir === 'asc' ? -1 : 1;
+    if (av > bv) return sortDir === 'asc' ? 1 : -1;
+    return 0;
+  });
+
+  document.getElementById('coTableCount').textContent = `${data.length} syarikat`;
+  const countEl = document.getElementById('coSearchCount');
+  countEl.textContent = q ? `${data.length} dijumpai` : '';
+
+  const tbody = document.getElementById('companyTableBody');
+  const maxC  = data.length ? data.reduce((m, c) => c.count > m ? c.count : m, 0) : 1;
+  tbody.innerHTML = data.map((c, i) => {
+    const rank      = i + 1;
+    const rankClass = rank === 1 ? 'rank-1' : rank === 2 ? 'rank-2' : rank === 3 ? 'rank-3' : 'rank-n';
+    const barW      = Math.max(6, (c.count / maxC) * 80);
+    const progBadge = `<span style="font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;background:${c.program==='dcs'?'var(--blue-lt)':'var(--purple-lt)'};color:${c.program==='dcs'?'var(--accent)':'var(--purple)'};">${c.program.toUpperCase()}</span>`;
+    return `
+      <tr data-idx="${COMPANIES.indexOf(c)}">
+        <td><span class="rank-badge ${rankClass}">${rank}</span></td>
+        <td style="font-weight:500">${c.name} &nbsp;${progBadge}</td>
+        <td>
+          <div class="co-bar-cell">
+            <div class="co-mini-bar" style="width:${barW}px;background:${coColorArr[(i) % coColorArr.length]}"></div>
+          </div>
+        </td>
+        <td><span class="co-count">${c.count}</span> <span style="color:var(--muted);font-size:11px">pelajar</span></td>
+      </tr>`;
+  }).join('');
+
+  // Row click → modal
+  tbody.querySelectorAll('tr').forEach(row => {
+    row.addEventListener('click', () => openModal(+row.getAttribute('data-idx')));
+  });
+}
+
+renderCompanyTable();
+
+// Sort on header click
+document.querySelectorAll('.co-table th[data-col]').forEach(th => {
+  th.addEventListener('click', () => {
+    const col = th.getAttribute('data-col');
+    if (col === 'bar' || col === 'rank') return;
+    if (sortCol === col) {
+      sortDir = sortDir === 'asc' ? 'desc' : 'asc';
+    } else {
+      sortCol = col;
+      sortDir = col === 'count' ? 'desc' : 'asc';
+    }
+    document.querySelectorAll('.co-table th').forEach(h => h.classList.remove('sort-asc','sort-desc'));
+    th.classList.add(sortDir === 'asc' ? 'sort-asc' : 'sort-desc');
+    renderCompanyTable();
+  });
+});
+
+// Search input
+document.getElementById('coSearch').addEventListener('input', renderCompanyTable);
+
+// ════════════════════════════════════════════════════════
+// MODAL
+// ════════════════════════════════════════════════════════
+const modalOverlay = document.getElementById('modalOverlay');
+const modalClose   = document.getElementById('modalClose');
+
+function openModal(idx) {
+  const c = COMPANIES[idx];
+  document.getElementById('modalTitle').textContent = c.name;
+
+  const placed = c.count;
+  const progLabel = c.program.toUpperCase();
+  document.getElementById('modalStats').innerHTML = `
+    <div class="modal-stat">
+      <div class="modal-stat-label">Pelajar Ditempatkan</div>
+      <div class="modal-stat-val" style="color:var(--green)">${placed}</div>
+    </div>
+    <div class="modal-stat">
+      <div class="modal-stat-label">Program</div>
+      <div class="modal-stat-val" style="color:${c.program==='dcs'?'var(--accent)':'var(--purple)'}">${progLabel}</div>
+    </div>
+    <div class="modal-stat">
+      <div class="modal-stat-label">Negeri</div>
+      <div class="modal-stat-val" style="font-size:16px;letter-spacing:0">${c.negeri}</div>
+    </div>`;
+
+  document.getElementById('modalContent').innerHTML = `
+    <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px 18px;">
+      <div style="font-size:13px;color:var(--muted);margin-bottom:6px;">Status Penempatan Syarikat</div>
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div style="flex:1;height:10px;background:var(--border);border-radius:5px;overflow:hidden;">
+          <div style="height:100%;width:100%;background:var(--green);border-radius:5px;"></div>
+        </div>
+        <span style="font-size:13px;font-weight:700;color:var(--green)">${placed} pelajar ditempatkan ✓</span>
+      </div>
+      <div style="margin-top:14px;font-size:12.5px;color:var(--muted);">
+        Syarikat ini telah menerima <strong>${placed} pelajar</strong> program <strong>${progLabel}</strong> 
+        untuk WBL Sesi 2 2026/2027 di ${c.negeri}.
+      </div>
+    </div>`;
+
+  modalOverlay.classList.add('open');
+}
+
+modalClose.addEventListener('click', () => modalOverlay.classList.remove('open'));
+modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) modalOverlay.classList.remove('open'); });
+document.addEventListener('keydown', e => { if (e.key === 'Escape') modalOverlay.classList.remove('open'); });
+
+// ════════════════════════════════════════════════════════
+// MAP COLOURS
+// ════════════════════════════════════════════════════════
+const mapMax = Math.max(...STATES.map(s => s.count));
+
+function getStateColor(stateName) {
+  const count = STATE_MAP[stateName] || 0;
+  if (count === 0) return '#e2e8f0';
+  const t = count / mapMax;
+  const r = Math.round(219 + (29  - 219) * t);
+  const g = Math.round(234 + (78  - 234) * t);
+  const b = Math.round(254 + (216 - 254) * t);
+  return `rgb(${r},${g},${b})`;
+}
+
+document.querySelectorAll('.state-path').forEach(path => {
+  path.style.fill = getStateColor(path.getAttribute('data-state'));
+});
+
+// ════════════════════════════════════════════════════════
+// MAP INTERACTIVITY
+// ════════════════════════════════════════════════════════
+const mapTooltip  = document.getElementById('mapTooltip');
+const ttNameEl    = document.getElementById('ttName');
+const ttCountEl   = document.getElementById('ttCount');
+const ttCoEl      = document.getElementById('ttCo');
+const infoName    = document.getElementById('stateInfoName');
+const infoSub     = document.getElementById('stateInfoSub');
+const infoKpi     = document.getElementById('stateInfoKpi');
+const kpiPelajar  = document.getElementById('stateKpiPelajar');
+const kpiSyarikat = document.getElementById('stateKpiSyarikat');
+const coContent   = document.getElementById('stateCoContent');
+
+let selectedState = null;
+
+document.querySelectorAll('.state-path').forEach(path => {
+  const state = path.getAttribute('data-state');
+  const count = STATE_MAP[state] || 0;
+  const cos   = STATE_COMPANIES[state] || [];
+
+  path.addEventListener('mouseenter', () => {
+    ttNameEl.textContent  = state;
+    ttCountEl.textContent = count ? `${count} pelajar` : 'Tiada pelajar';
+    ttCoEl.textContent    = cos.length ? `${cos.length} syarikat` : '—';
+    mapTooltip.classList.add('show');
+  });
+  path.addEventListener('mousemove', e => {
+    mapTooltip.style.left = (e.clientX + 16) + 'px';
+    mapTooltip.style.top  = (e.clientY - 40) + 'px';
+  });
+  path.addEventListener('mouseleave', () => {
+    mapTooltip.classList.remove('show');
+  });
+
+  path.addEventListener('click', () => {
+    if (selectedState) {
+      document.querySelectorAll(`.state-path[data-state="${selectedState}"]`)
+        .forEach(p => p.classList.remove('selected'));
+    }
+    selectedState = state;
+    document.querySelectorAll(`.state-path[data-state="${state}"]`)
+      .forEach(p => p.classList.add('selected'));
+
+    infoName.textContent = state;
+    infoSub.textContent  = count
+      ? `${count} pelajar · ${cos.length} syarikat terlibat`
+      : 'Tiada pelajar WBL di negeri ini';
+
+    if (count > 0) {
+      infoKpi.style.display = 'grid';
+      kpiPelajar.textContent  = count;
+      kpiSyarikat.textContent = cos.length;
+      const sorted = [...cos].sort((a, b) => b.count - a.count);
+      let html = '<div class="state-co-list">';
+      sorted.forEach((c, i) => {
+        const progColor = c.program === 'dcs' ? 'var(--accent)' : 'var(--purple)';
+        html += `
+          <div class="state-co-item">
+            <div class="state-co-num">${i + 1}</div>
+            <div class="state-co-name">${c.name}</div>
+            <span style="font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;background:${c.program==='dcs'?'var(--blue-lt)':'var(--purple-lt)'};color:${progColor};margin-right:6px;">${c.program.toUpperCase()}</span>
+            <div class="state-co-count">${c.count}</div>
+          </div>`;
+      });
+      html += '</div>';
+      coContent.innerHTML = html;
+    } else {
+      infoKpi.style.display = 'none';
+      coContent.innerHTML = `
+        <div class="state-empty">
+          <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#cbd5e1" stroke-width="1.5">
+            <circle cx="12" cy="12" r="10"/><path d="M12 8v4m0 4h.01"/>
+          </svg>
+          <div style="margin-top:8px;">Tiada pelajar</div>
+          <div style="font-size:11px;margin-top:4px;">Negeri ini tiada pelajar WBL buat masa ini</div>
+        </div>`;
+    }
+  });
+});
+
+// ════════════════════════════════════════════════════════
+// EXPORT CSV
+// ════════════════════════════════════════════════════════
+document.getElementById('btnExportCSV').addEventListener('click', () => {
+  let data = COMPANIES.filter(c => activeFilter === 'all' || c.program === activeFilter);
+  const header = ['#', 'Nama Syarikat', 'Program', 'Negeri', 'Bilangan Pelajar'];
+  const rows   = data.map((c, i) => [i+1, `"${c.name}"`, c.program.toUpperCase(), c.negeri, c.count]);
+  const csv    = [header, ...rows].map(r => r.join(',')).join('\n');
+  const blob   = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+  const url    = URL.createObjectURL(blob);
+  const a      = document.createElement('a');
+  a.href = url; a.download = `WBL_Syarikat_${activeFilter.toUpperCase()}.csv`;
+  document.body.appendChild(a); a.click();
+  document.body.removeChild(a); URL.revokeObjectURL(url);
+});
+
+// ════════════════════════════════════════════════════════
+// PRINT / PDF
+// ════════════════════════════════════════════════════════
+document.getElementById('btnExportPDF').addEventListener('click', () => window.print());
+</script>
+
+</body>
+</html>
